@@ -1,0 +1,24 @@
+{
+    "name": "take-me-to-a-vup",
+    "version": "1.0.0",
+    "description": "随机将你带到一个 VUP 的 Bilibili 主页，Node-only + EdgeOne-ready",
+    "main": "server.js",
+    "scripts": {
+        "dev": "nodemon server.js",
+        "preview": "node server.js --dist",
+        "start": "node server.js --dist",
+        "vup": "node scripts/vup-manager.js",
+        "prefetch": "node scripts/fetch-bilibili.js",
+        "prefetch:force": "node scripts/fetch-bilibili.js --force",
+        "build": "node build.js",
+        "deploy": "npm run prefetch && npm run build"
+    },
+    "dependencies": {
+        "express": "^4.19.2"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.0"
+    },
+    "author": "Huameitang",
+    "license": "MIT"
+}
