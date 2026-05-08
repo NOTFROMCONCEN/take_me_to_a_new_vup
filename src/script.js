@@ -84,6 +84,7 @@
     const showAllLabel = document.getElementById('show-all-label');
     const countdownLabel = document.getElementById('countdown-label');
     const panelTitleElement = document.getElementById('panel-title');
+    const a11yAnnouncer = document.getElementById('a11y-announcer');
 
     let countdown = COUNTDOWN_SECONDS;
     let timerId = null;
@@ -92,6 +93,22 @@
     let countdownTargetUrl = '#';
     let countdownPausedAt = null;
     let activeTag = '全部';
+
+    // ── 无障碍：屏幕阅读器公告 ──
+    function announce(message) {
+        if (!a11yAnnouncer) return;
+        a11yAnnouncer.textContent = '';
+        // 强制重绘以触发公告
+        setTimeout(() => {
+            a11yAnnouncer.textContent = message;
+        }, 100);
+    }
+
+    // ── 无障碍：管理焦点 ──
+    function setFocus(element) {
+        if (!element) return;
+        element.focus({ preventScroll: false });
+    }
 
     // ── 主题 ──
     function getPreferredTheme() {
@@ -113,12 +130,17 @@
         const next = current === 'dark' ? 'light' : 'dark';
         localStorage.setItem('theme', next);
         applyTheme(next);
+        // 无障碍：公告主题变更
+        announce(next === 'light' ? '已切换到浅色主题' : '已切换到深色主题');
     }
 
     // ── 语言 ──
     function applyLang() {
         const lang = getLang();
-        if (langToggleButton) langToggleButton.textContent = lang === 'zh-CN' ? 'EN' : '中';
+        if (langToggleButton) {
+            langToggleButton.textContent = lang === 'zh-CN' ? 'EN' : '中';
+            langToggleButton.setAttribute('aria-label', lang === 'zh-CN' ? '切换到英语' : '切换到中文');
+        }
         document.title = t('title');
         if (nameElement.textContent === '加载中…' || nameElement.textContent === 'Loading…') {
             nameElement.textContent = t('loading');
@@ -141,6 +163,8 @@
         const next = current === 'zh-CN' ? 'en' : 'zh-CN';
         localStorage.setItem('lang', next);
         applyLang();
+        // 无障碍：公告语言变更
+        announce(next === 'zh-CN' ? '已切换到中文' : 'Switched to English');
     }
 
     // ── 头像路径（基于 UID，支持 WebP 和多尺寸） ──
@@ -220,6 +244,9 @@
         introElement.textContent = vup.intro || t('noIntro');
         jumpButton.href = vup.url;
         currentVupUrl = vup.url;
+        
+        // 无障碍：公告 VUP 变更
+        announce(`已选择 ${vup.name}`);
     }
 
     // ── "换一个"不刷新页面 ──
@@ -243,6 +270,8 @@
             startCountdown(selectedVup.url);
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
+            // 无障碍：将焦点移到卡片，便于键盘用户
+            setFocus(card);
         }, 200);
     }
 
@@ -263,14 +292,20 @@
         if (!tagFilterElement) return;
         const tags = getAllTags(allVupsCache);
         tagFilterElement.innerHTML = '';
+        
+        // 设置标签容器的 ARIA 属性
+        tagFilterElement.setAttribute('role', 'group');
+        tagFilterElement.setAttribute('aria-label', '按标签筛选 VUP');
 
         const allBtn = document.createElement('button');
         allBtn.className = 'tag-btn active';
         allBtn.textContent = t('allTags');
+        allBtn.setAttribute('aria-pressed', 'true');
         allBtn.addEventListener('click', () => {
             activeTag = '全部';
             renderVupGrid(allVupsCache);
             updateTagButtons();
+            announce(`已显示全部 ${allVupsCache.length} 个 VUP`);
         });
         tagFilterElement.appendChild(allBtn);
 
@@ -278,6 +313,7 @@
             const btn = document.createElement('button');
             btn.className = 'tag-btn';
             btn.textContent = tag;
+            btn.setAttribute('aria-pressed', 'false');
             btn.addEventListener('click', () => {
                 activeTag = tag;
                 const filtered = allVupsCache.filter(v =>
@@ -285,6 +321,7 @@
                 );
                 renderVupGrid(filtered);
                 updateTagButtons();
+                announce(`已筛选标签"${tag}"，共 ${filtered.length} 个 VUP`);
             });
             tagFilterElement.appendChild(btn);
         }
@@ -297,10 +334,13 @@
             const isActive = (activeTag === '全部' && btn === tagFilterElement.firstElementChild) ||
                 btn.textContent === activeTag;
             btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
     }
 
     // ── 搜索 ──
+    let searchDebounceTimer = null;
+    
     function getFilteredVups() {
         const query = (searchInputElement ? searchInputElement.value : '').trim().toLowerCase();
         let vups = allVupsCache;
@@ -322,11 +362,17 @@
     // ── VUP 网格渲染 ──
     function renderVupGrid(vups) {
         vupGridElement.innerHTML = '';
+        
+        // 设置网格的 ARIA 属性
+        vupGridElement.setAttribute('role', 'list');
+        vupGridElement.setAttribute('aria-label', `VUP 列表，共 ${vups.length} 个`);
 
         if (vups.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'vup-grid-empty';
             empty.textContent = '—';
+            empty.setAttribute('role', 'status');
+            empty.setAttribute('aria-live', 'polite');
             vupGridElement.appendChild(empty);
             return;
         }
@@ -337,6 +383,8 @@
             card.href = vup.url;
             card.target = '_blank';
             card.rel = 'noreferrer noopener';
+            card.setAttribute('role', 'listitem');
+            card.setAttribute('aria-label', `${vup.name}，${vup.intro || t('clickToVisit')}`);
 
             const image = document.createElement('img');
             image.className = 'vup-grid-avatar';
@@ -361,10 +409,12 @@
             const title = document.createElement('span');
             title.className = 'vup-grid-name';
             title.textContent = vup.name;
+            title.setAttribute('aria-hidden', 'true');
 
             const intro = document.createElement('span');
             intro.className = 'vup-grid-intro';
             intro.textContent = vup.intro || t('clickToVisit');
+            intro.setAttribute('aria-hidden', 'true');
 
             card.append(image, title, intro);
             vupGridElement.append(card);
@@ -372,19 +422,36 @@
     }
 
     // ── 弹窗 ──
+    let focusBeforeOpen = null;
+
     function openAllVups() {
         pauseCountdown();
+        // 保存当前焦点，关闭时恢复
+        focusBeforeOpen = document.activeElement;
         overlayElement.classList.add('is-open');
         overlayElement.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
-        panelCloseButton.focus();
-        if (searchInputElement) searchInputElement.focus();
+        // 将焦点移到搜索框或关闭按钮
+        if (searchInputElement) {
+            setFocus(searchInputElement);
+        } else {
+            setFocus(panelCloseButton);
+        }
+        // 无障碍：公告弹窗打开
+        announce('已打开全部 VUP 列表');
     }
 
     function closeAllVups() {
         overlayElement.classList.remove('is-open');
         overlayElement.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
+        // 恢复之前的焦点
+        if (focusBeforeOpen) {
+            setFocus(focusBeforeOpen);
+            focusBeforeOpen = null;
+        }
+        // 无障碍：公告弹窗关闭
+        announce('已关闭列表');
         resumeCountdown();
         showAllButton.focus();
     }
@@ -486,7 +553,30 @@
 
     if (searchInputElement) {
         searchInputElement.addEventListener('input', () => {
-            renderVupGrid(getFilteredVups());
+            // 防抖处理，避免频繁更新
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                const filtered = getFilteredVups();
+                renderVupGrid(filtered);
+                // 无障碍：公告搜索结果
+                const query = searchInputElement.value.trim();
+                if (query) {
+                    announce(`找到 ${filtered.length} 个匹配"${query}"的结果`);
+                } else {
+                    announce(`显示 ${filtered.length} 个 VUP`);
+                }
+            }, 300);
+        });
+        
+        // 支持键盘 Enter 键触发搜索
+        searchInputElement.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                clearTimeout(searchDebounceTimer);
+                const filtered = getFilteredVups();
+                renderVupGrid(filtered);
+                const query = searchInputElement.value.trim();
+                announce(query ? `找到 ${filtered.length} 个结果` : `显示 ${filtered.length} 个 VUP`);
+            }
         });
     }
 

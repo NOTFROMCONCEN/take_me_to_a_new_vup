@@ -22,8 +22,14 @@
 </head>
 
 <body>
+    <!-- Skip to main content link for keyboard users -->
+    <a href="#main-content" class="skip-link">跳转到主内容</a>
+    
+    <!-- Screen reader only announcements -->
+    <div class="sr-only" aria-live="polite" aria-atomic="true" id="a11y-announcer"></div>
+    
     <!-- 背景极光 -->
-    <div class="bg">
+    <div class="bg" aria-hidden="true">
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
         <div class="orb orb-3"></div>
@@ -47,7 +53,7 @@
         </div>
     </div>
 
-    <main class="card">
+    <main class="card" id="main-content" role="main">
         <!-- 左列：头像 + 环形倒计时 -->
         <div class="card-left">
             <div class="avatar-wrapper">
@@ -61,10 +67,10 @@
                     <circle class="ring-track" cx="60" cy="60" r="54" />
                     <circle class="ring-fill" id="countdown-ring" cx="60" cy="60" r="54" />
                 </svg>
-                <img id="avatar" src="" alt="VUP 头像">
+                <img id="avatar" src="" alt="" aria-live="polite">
             </div>
-            <div class="countdown-display">
-                <span id="countdown" class="countdown-num">10</span>
+            <div class="countdown-display" aria-live="off">
+                <span id="countdown" class="countdown-num" aria-label="倒计时秒数">10</span>
                 <span id="countdown-label" class="countdown-label">秒后跳转</span>
             </div>
         </div>
@@ -74,17 +80,17 @@
 
         <!-- 右列：名字 + 简介 + 按钮 -->
         <div class="card-right">
-            <h1 id="name" class="vup-name">加载中…</h1>
-            <p id="intro" class="vup-intro"></p>
+            <h1 id="name" class="vup-name" aria-live="polite">加载中…</h1>
+            <p id="intro" class="vup-intro" aria-live="polite"></p>
             <div class="button-group">
-                <a id="jump-button" href="#" class="btn btn-primary">
+                <a id="jump-button" href="#" class="btn btn-primary" role="button">
                     <span id="jump-label">立即跳转</span>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                 </a>
-                <a id="change-button" href="#" class="btn btn-ghost"><span id="change-label">换一个</span></a>
+                <button id="change-button" type="button" class="btn btn-ghost"><span id="change-label">换一个</span></button>
             </div>
         </div>
     </main>
@@ -103,7 +109,7 @@
             </div>
             <div class="panel-toolbar">
                 <input type="search" id="vup-search" class="vup-search" placeholder="搜索名称或简介…"
-                    autocomplete="off" spellcheck="false">
+                    autocomplete="off" spellcheck="false" aria-label="搜索 VUP">
             </div>
             <div class="tag-filter" id="tag-filter"></div>
             <div class="vup-grid" id="vup-grid"></div>

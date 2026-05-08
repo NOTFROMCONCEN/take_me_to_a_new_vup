@@ -4,6 +4,61 @@
     padding: 0;
 }
 
+/* ── Accessibility: Skip Link ── */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 16px;
+    z-index: 9999;
+    padding: 12px 24px;
+    background: #f8fafc;
+    color: #0f172a;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95em;
+    transition: top 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.skip-link:focus {
+    top: 16px;
+}
+
+/* ── Accessibility: Screen Reader Only ── */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── Accessibility: Focus Indicators ── */
+:focus-visible {
+    outline: 2px solid #a78bfa;
+    outline-offset: 2px;
+}
+
+/* Ensure focus styles work on all interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 2px solid #a78bfa;
+    outline-offset: 2px;
+}
+
+/* Remove default outline and use custom focus-visible */
+button:focus,
+a:focus,
+input:focus {
+    outline: none;
+}
+
 body {
     font-family: 'Segoe UI', 'PingFang SC', 'Noto Sans SC', sans-serif;
     min-height: 100vh;
