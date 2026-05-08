@@ -8,7 +8,8 @@
 - 数据文件位于 `data/vup.json`。
 - 本地头像缓存位于 `face_img/`。
 - `scripts/fetch-bilibili.js` 负责从 B 站公开接口批量更新头像与简介。
-- `scripts/vup-manager.js` 提供增删改查的交互式管理能力。
+- `scripts/vup-manager.js` 提供增删改查、验证、导入/导出的交互式管理能力。
+- `scripts/optimize-images.js` 负责将头像转换为 WebP 格式并生成多尺寸。
 - `build.js` 负责生成可直接部署到 EdgeOne 的 `dist/` 目录。
 - `server.js` 仅用于本地开发和预览，不参与线上运行。
 
@@ -68,6 +69,9 @@ npm run vup -- add --uid 672328094 --name 嘉然Diana
 npm run vup -- remove --uid 672328094
 npm run vup -- update --uid 672328094 --force
 npm run vup -- update-all
+npm run vup -- validate
+npm run vup -- export --output backup.json
+npm run vup -- import --input backup.json
 ```
 
 这个脚本支持：
@@ -76,6 +80,8 @@ npm run vup -- update-all
 - 按 UID 新增 VUP 到 `data/vup.json`
 - 按 UID 删除 VUP
 - 更新单个或全部 VUP 的头像和简介
+- 验证数据完整性（UID 唯一性、必填字段、头像文件）
+- 导出/导入 VUP 数据（自动去重）
 
 可选参数：
 
@@ -86,6 +92,16 @@ npm run vup -- update-all
 | `--no-avatar` | 不下载头像文件 |
 | `--keep-avatar` | 删除时保留本地头像文件 |
 | `--force` | 强制覆盖已有数据 |
+| `--output <路径>` | 导出文件路径 |
+| `--input <路径>` | 导入文件路径 |
+
+### 数据验证
+
+```bash
+npm run validate
+```
+
+检查数据完整性：UID 唯一性、必填字段、头像文件存在性等。
 
 ## 构建静态产物
 
@@ -121,28 +137,68 @@ take_me_to_A_vup/
 ├── face_img/                 # 本地头像缓存
 ├── scripts/
 │   ├── fetch-bilibili.js     # B 站数据批量预取脚本
-│   └── vup-manager.js        # VUP 数据管理脚本（增删改查）
+│   ├── optimize-images.js    # 图片优化脚本（WebP 转换）
+│   └── vup-manager.js        # VUP 数据管理脚本（增删改查 + 验证 + 导入/导出）
 ├── src/
 │   ├── index.html            # 页面结构
 │   ├── script.js             # 前端交互逻辑
-│   └── style.css             # 页面样式
+│   ├── style.css             # 页面样式
+│   └── sw.js                 # Service Worker（离线缓存）
+├── .github/
+│   ├── copilot-instructions.md
+│   └── workflows/
+│       ├── deploy.yml        # EdgeOne Pages 自动部署
+│       └── update-vup.yml    # 定时更新 VUP 数据
 ├── package.json
 └── server.js                 # 本地开发 / 预览服务器
 ```
 
-## 前端逻辑
+## 前端功能
 
-- 页面从 `/vup.json` 获取全部 VUP 数据，在浏览器端完成随机选择。
-- 使用 `localStorage` 记录上次展示的 VUP，避免连续重复。
-- 头像优先加载本地 `face_img/` 中的缓存，失败时回退到 B 站 CDN。
-- 倒计时 10 秒后自动跳转到 VUP 的 B 站主页。
-- 支持键盘操作（Escape 关闭弹窗）和无障碍访问（ARIA 属性）。
+### 核心功能
+- 页面从 `/vup.json` 获取全部 VUP 数据，在浏览器端完成随机选择
+- 使用 `localStorage` 记录上次展示的 VUP，避免连续重复
+- 头像优先加载本地 `face_img/` 中的 WebP 缓存，失败时回退到 JPG → B 站 CDN
+- 倒计时 10 秒后自动跳转到 VUP 的 B 站主页
+- 支持暂停/恢复倒计时
+
+### 标签与搜索
+- 支持按标签筛选 VUP
+- 支持按名称或简介搜索
+
+### 主题与国际化
+- 支持浅色/深色主题切换（自动检测系统偏好）
+- 支持中文/英文切换
+
+### 键盘快捷键
+| 快捷键 | 功能 |
+|--------|------|
+| `空格` / `N` | 换一个 VUP |
+| `P` | 暂停/恢复倒计时 |
+| `L` | 打开全部 VUP 列表 |
+| `S` | 分享当前 VUP |
+| `Enter` | 立即跳转 |
+| `Esc` | 关闭弹窗 |
+
+### 无障碍访问
+- Skip Link 跳转到主内容
+- ARIA 属性和 live region
+- 键盘导航和焦点管理
+- 屏幕阅读器公告
+- WCAG 2.1 AA 颜色对比度
+
+### 离线支持
+- Service Worker 缓存静态资源
+- Stale-While-Revalidate 策略（静态资源）
+- Network First 策略（数据文件）
+- Cache First 策略（图片资源）
 
 ## 数据约定
 
-- `data/vup.json` 字段：`name`、`url`、`avatar`、`intro`
-- 头像本地路径约定：`face_img/<name>.jpg`
-- `name` 字段由用户维护，作为展示名 & face_img 文件名 key，不从 B 站覆盖
+- `data/vup.json` 字段：`name`、`uid`、`url`、`avatar`、`intro`、`tags`
+- 头像本地路径约定：`face_img/<uid>.jpg`（WebP 优化后为 `<uid>.webp`、`<uid>@72w.webp`、`<uid>@140w.webp`）
+- `name` 字段由用户维护，作为展示名，不从 B 站覆盖
+- `uid` 字段为 B 站用户 UID，作为头像文件名 key
 
 ## License
 

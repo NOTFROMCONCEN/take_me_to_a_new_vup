@@ -91,6 +91,7 @@ if (errors.length > 0) {
 }
 
 // ── 清理并重建 dist/ ──────────────────────────────────────
+const buildStartTime = Date.now();
 fs.rmSync(DIST, { recursive: true, force: true });
 fs.mkdirSync(path.join(DIST, 'face_img'), { recursive: true });
 
@@ -147,5 +148,9 @@ console.log(`  face_img/    ${imgInfo.fileCount} files, ${formatBytes(imgInfo.to
 const totalSize = htmlSize + cssSize + jsSize + jsonSize + imgInfo.totalSize;
 console.log(`  ─────────────────────`);
 console.log(`  总计          ${formatBytes(totalSize)}`);
+
+const buildDuration = Date.now() - buildStartTime;
+console.log(`  构建耗时      ${buildDuration}ms`);
+console.log(`  构建时间      ${new Date().toISOString()}`);
 
 console.log('\n构建完成 → dist/');
