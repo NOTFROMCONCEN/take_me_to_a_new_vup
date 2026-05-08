@@ -514,3 +514,34 @@ body.modal-open {
         max-height: calc(86vh - 92px);
     }
 }
+
+/* ── Reduced motion: 尊重用户系统偏好 ── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .ring-fill {
+        transition: none !important;
+    }
+}
+
+/* ── 自定义滚动条（弹窗内列表） ── */
+.vup-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.vup-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.vup-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+}
+
+.vup-grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

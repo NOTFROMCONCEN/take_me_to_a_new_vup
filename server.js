@@ -12,11 +12,29 @@ const PORT = process.env.PORT || 5090;
 const serveDist = process.argv.includes('--dist');
 const webRoot = serveDist ? path.join(__dirname, 'dist') : path.join(__dirname, 'src');
 
+// ── 安全响应头 ──
+app.use((_, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
+
 if (serveDist) {
-    app.use(express.static(webRoot));
+    // dist 模式：静态资源加长期缓存（构建产物文件名不变时可安全缓存）
+    app.use(express.static(webRoot, {
+        maxAge: '1h',
+        immutable: false
+    }));
 } else {
-    app.use(express.static(webRoot));
-    app.use('/face_img', express.static(path.join(__dirname, 'face_img')));
+    // 开发模式：禁用缓存，方便调试
+    app.use(express.static(webRoot, {
+        maxAge: 0,
+        etag: false
+    }));
+    app.use('/face_img', express.static(path.join(__dirname, 'face_img'), {
+        maxAge: '1d'
+    }));
     app.get('/vup.json', (_req, res) => {
         res.sendFile(path.join(__dirname, 'data', 'vup.json'));
     });

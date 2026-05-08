@@ -8,6 +8,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // 定义常量，避免魔法数字
     const COUNTDOWN_SECONDS = 10;
+    const CIRCUMFERENCE = 2 * Math.PI * 54; // ≈ 339.29，与 CSS stroke-dasharray 一致
 
     // 获取页面元素
     const avatarElement = document.getElementById('avatar');
@@ -23,14 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const vupGridElement = document.getElementById('vup-grid');
     const clockChipElement = document.getElementById('clock-chip');
 
-    const CIRCUMFERENCE = 339.3;
     let countdown = COUNTDOWN_SECONDS;
-    let timerId;
+    let timerId = null;
     let currentVupUrl = '#';
     let allVupsCache = [];
+    let countdownTargetUrl = '#';
+    let countdownPausedAt = null; // 记录暂停时剩余秒数
 
     /**
-     * @author Huameitang
      * @description 拉取全量 VUP 数据并在浏览器端挑选当前展示项。
      */
     async function loadVup() {
@@ -40,6 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const allVups = await response.json();
+
+            if (!Array.isArray(allVups) || allVups.length === 0) {
+                throw new Error('VUP 数据为空或格式不正确');
+            }
 
             // 用 localStorage 记录上次展示的 VUP，避免连续重复。
             const lastVupName = localStorage.getItem('lastVupName');
@@ -59,15 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('获取VUP数据失败:', error);
             nameElement.textContent = '加载失败';
             introElement.textContent = '无法获取VUP信息，请检查网络连接或联系管理员。';
+            countdownElement.textContent = '--';
         }
     }
 
     /**
-     * @author Huameitang
      * @description 更新页面上的VUP信息。
      * @param {object} vup - 包含VUP信息的对象 (name, url, avatar, intro)。
-     *              此函数将从传入的vup对象中提取信息，并更新到对应的HTML元素中。
-     *              将更新DOM的操作封装成一个独立的函数，提高了代码的复用性和可读性。
      */
     function updateVupInfo(vup) {
         const localAvatarPath = `/face_img/${encodeURIComponent(vup.name)}.jpg`;
@@ -122,16 +125,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openAllVups() {
-        clearInterval(timerId);
+        pauseCountdown();
         overlayElement.classList.add('is-open');
         overlayElement.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
+        // 聚焦到关闭按钮，方便键盘操作
+        panelCloseButton.focus();
     }
 
     function closeAllVups() {
         overlayElement.classList.remove('is-open');
         overlayElement.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
+        resumeCountdown();
+        // 焦点回到触发按钮
+        showAllButton.focus();
     }
 
     function updateClock() {
@@ -145,15 +153,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * @author Huameitang
+     * @description 暂停倒计时（弹窗打开或页面隐藏时调用）。
+     */
+    function pauseCountdown() {
+        if (timerId !== null) {
+            clearInterval(timerId);
+            timerId = null;
+            countdownPausedAt = countdown;
+        }
+    }
+
+    /**
+     * @description 恢复倒计时（弹窗关闭或页面重新可见时调用）。
+     */
+    function resumeCountdown() {
+        if (countdownPausedAt !== null && countdownPausedAt > 0) {
+            countdown = countdownPausedAt;
+            countdownPausedAt = null;
+            startCountdown(countdownTargetUrl);
+        }
+    }
+
+    /**
      * @description 启动倒计时，并在结束后跳转到指定URL。
      * @param {string} url - 倒计时结束后要跳转的目标URL。
-     *              使用setInterval来实现每秒更新倒计时显示。
-     *              当倒计时为0时，清除定时器并执行页面跳转。
-     *              这种方式可以精确地控制定时任务，并且可以在需要时通过clearInterval停止它。
      */
     function startCountdown(url) {
         clearInterval(timerId);
+        countdownTargetUrl = url;
         countdown = COUNTDOWN_SECONDS;
         ringEl.style.strokeDashoffset = 0;
         countdownElement.textContent = countdown;
@@ -163,23 +190,34 @@ document.addEventListener('DOMContentLoaded', () => {
             ringEl.style.strokeDashoffset = CIRCUMFERENCE * (COUNTDOWN_SECONDS - countdown) / COUNTDOWN_SECONDS;
             if (countdown <= 0) {
                 clearInterval(timerId);
+                timerId = null;
+                countdownPausedAt = null;
                 window.location.href = url;
             }
         }, 1000);
     }
+
+    // ── 页面可见性：标签页隐藏时暂停倒计时，恢复时继续 ──
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            pauseCountdown();
+        } else {
+            // 仅在弹窗未打开时恢复
+            if (!overlayElement.classList.contains('is-open')) {
+                resumeCountdown();
+            }
+        }
+    });
 
     // 页面加载完成后，立即加载VUP信息
     loadVup();
     updateClock();
     window.setInterval(updateClock, 1000);
 
-    /**
-     * @author Huameitang
-     * @description 为“换一个”按钮添加点击事件监听器。
-     *              直接刷新页面即可重新抽取一个 VUP。
-     */
+    // ── 事件绑定 ──
+
     changeButton.addEventListener('click', (event) => {
-        event.preventDefault(); // 阻止<a>标签的默认跳转行为
+        event.preventDefault();
         location.reload();
     });
 
