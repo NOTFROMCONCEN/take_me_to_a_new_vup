@@ -304,10 +304,29 @@ body.modal-open {
     cursor: pointer;
     border: none;
     transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    /* 触摸优化 */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
 }
 
 .btn:active {
     transform: scale(0.96) !important;
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .btn:hover {
+        transform: none;
+        background: var(--accent-primary);
+    }
+    
+    .topbar-btn:hover,
+    .topbar-icon-btn:hover,
+    .tag-btn:hover,
+    .vup-grid-item:hover {
+        transform: none;
+    }
 }
 
 .btn-primary {
@@ -448,31 +467,74 @@ body.modal-open {
     overflow: hidden;
 }
 
-/* ── Responsive: collapse to single column ── */
-@media (max-width: 620px) {
-    .topbar {
-        top: 14px;
-        left: 14px;
-        right: 14px;
+/* ── Responsive: 平板 ── */
+@media (max-width: 768px) {
+    .card {
+        width: calc(100vw - 40px);
+        max-width: 580px;
     }
 
-    .topbar-btn {
-        padding: 0 14px;
-        font-size: 0.9rem;
+    .topbar-btn span {
+        display: none;
+    }
+
+    .topbar-right {
+        gap: 8px;
+    }
+
+    .topbar-icon-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
     }
 
     .clock-chip {
-        min-width: 102px;
-        padding: 10px 12px;
-        font-size: 0.84rem;
+        min-width: 100px;
+        font-size: 0.88rem;
+    }
+}
+
+/* ── Responsive: 手机 ── */
+@media (max-width: 620px) {
+    .topbar {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        gap: 8px;
+    }
+
+    .topbar-btn {
+        padding: 0 12px;
+        min-height: 40px;
+        font-size: 0.85rem;
+    }
+
+    .topbar-btn span {
+        display: none;
+    }
+
+    .topbar-right {
+        gap: 6px;
+    }
+
+    .topbar-icon-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
+    }
+
+    .clock-chip {
+        min-width: 88px;
+        padding: 8px 10px;
+        font-size: 0.8rem;
     }
 
     .card {
         flex-direction: column;
-        width: calc(100vw - 32px);
-        padding: 30px 22px 28px;
-        border-radius: 22px;
-        gap: 20px;
+        width: calc(100vw - 24px);
+        padding: 24px 18px 22px;
+        border-radius: 20px;
+        gap: 18px;
     }
 
     .card-left {
@@ -480,38 +542,144 @@ body.modal-open {
         padding-bottom: 0;
     }
 
+    .avatar-wrapper {
+        width: 120px;
+        height: 120px;
+    }
+
     .divider {
         width: 100%;
         height: 1px;
         align-self: auto;
-        background: rgba(255,255,255,0.08);
+        margin: 4px 0;
     }
 
     .card-right {
         padding-left: 0;
         align-items: center;
         text-align: center;
+        gap: 12px;
+    }
+
+    .vup-name {
+        font-size: 1.5em;
     }
 
     .vup-intro {
+        font-size: 0.88em;
         -webkit-line-clamp: 3;
-        min-height: 4.2em;
+        min-height: 4em;
+        line-height: 1.6;
+    }
+
+    .button-group {
+        gap: 8px;
+    }
+
+    .btn {
+        min-height: 44px;
+        padding: 0 16px;
+        font-size: 0.9em;
     }
 
     .all-vup-overlay {
-        padding: 14px;
+        padding: 12px;
     }
 
     .all-vup-panel {
-        padding: 18px;
-        border-radius: 22px;
-        max-height: 86vh;
+        padding: 16px;
+        border-radius: 20px;
+        max-height: 88vh;
+    }
+
+    .panel-header {
+        margin-bottom: 14px;
+        gap: 12px;
+    }
+
+    .panel-title {
+        font-size: 1rem;
+    }
+
+    .panel-close {
+        width: 38px;
+        height: 38px;
+    }
+
+    .panel-toolbar {
+        margin-bottom: 12px;
+    }
+
+    .vup-search {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    .tag-filter {
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+
+    .tag-btn {
+        padding: 5px 12px;
+        font-size: 0.8rem;
     }
 
     .vup-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-        max-height: calc(86vh - 92px);
+        gap: 10px;
+        max-height: calc(88vh - 140px);
+    }
+
+    .vup-grid-item {
+        padding: 12px;
+        border-radius: 14px;
+        gap: 8px;
+    }
+
+    .vup-grid-avatar {
+        width: 64px;
+        height: 64px;
+    }
+
+    .vup-grid-name {
+        font-size: 0.9rem;
+    }
+
+    .vup-grid-intro {
+        font-size: 0.78rem;
+        -webkit-line-clamp: 2;
+    }
+}
+
+/* ── Responsive: 小屏手机 ── */
+@media (max-width: 380px) {
+    .card {
+        padding: 20px 16px 18px;
+        border-radius: 18px;
+    }
+
+    .avatar-wrapper {
+        width: 100px;
+        height: 100px;
+    }
+
+    .vup-name {
+        font-size: 1.3em;
+    }
+
+    .vup-intro {
+        font-size: 0.85em;
+    }
+
+    .vup-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .vup-grid-avatar {
+        width: 56px;
+        height: 56px;
     }
 }
 
