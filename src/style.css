@@ -509,6 +509,19 @@ body.modal-open {
     transform: translateY(-1px);
 }
 
+/* ── Button Row (for side-by-side buttons) ── */
+.btn-row {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
+    margin-top: auto;
+}
+
+.btn-row .btn {
+    flex: 1;
+}
+
 .all-vup-overlay {
     position: fixed;
     inset: 0;

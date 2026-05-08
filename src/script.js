@@ -607,6 +607,11 @@
         pauseButton.addEventListener('click', togglePause);
     }
 
+    const shareButton = document.getElementById('share-button');
+    if (shareButton) {
+        shareButton.addEventListener('click', shareCurrentVup);
+    }
+
     showAllButton.addEventListener('click', () => {
         if (allVupsCache.length === 0) return;
         openAllVups();
@@ -620,11 +625,105 @@
         }
     });
 
+    // ── 键盘快捷键 ──
     document.addEventListener('keydown', (event) => {
+        // 如果在搜索框中，不处理快捷键（除了 Escape）
+        const isSearchFocused = document.activeElement === searchInputElement;
+        
         if (event.key === 'Escape') {
             closeAllVups();
+            return;
+        }
+        
+        // 在搜索框中不处理其他快捷键
+        if (isSearchFocused) return;
+        
+        // 不在输入框中时才处理快捷键
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
+        
+        switch (event.key.toLowerCase()) {
+            case ' ':
+            case 'n':
+                // 空格/N：换一个
+                event.preventDefault();
+                pickAnother();
+                break;
+            case 'p':
+                // P：暂停/恢复
+                event.preventDefault();
+                togglePause();
+                break;
+            case 'l':
+                // L：展示所有 VUP
+                event.preventDefault();
+                if (allVupsCache.length > 0) openAllVups();
+                break;
+            case 's':
+                // S：分享当前 VUP
+                event.preventDefault();
+                shareCurrentVup();
+                break;
+            case 'enter':
+                // Enter：立即跳转
+                if (currentVupUrl && currentVupUrl !== '#') {
+                    window.location.href = currentVupUrl;
+                }
+                break;
         }
     });
+
+    // ── 分享功能 ──
+    function shareCurrentVup() {
+        const vupName = nameElement.textContent;
+        const vupUrl = currentVupUrl;
+        
+        if (!vupName || vupName === t('loading') || vupName === t('loadFailed')) {
+            showToast('暂无可分享的 VUP', 'info', 1500);
+            return;
+        }
+        
+        const shareText = `${vupName} 的 Bilibili 主页：${vupUrl}`;
+        
+        // 优先使用 Web Share API（移动端）
+        if (navigator.share) {
+            navigator.share({
+                title: `${vupName} - Bilibili`,
+                text: shareText,
+                url: vupUrl
+            }).then(() => {
+                showToast('分享成功', 'success', 1500);
+            }).catch(() => {
+                // 用户取消分享，不做处理
+            });
+        } else {
+            // 回退到复制到剪贴板
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    showToast(`已复制 ${vupName} 的链接`, 'success', 2000);
+                }).catch(() => {
+                    fallbackCopy(shareText);
+                });
+            } else {
+                fallbackCopy(shareText);
+            }
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showToast('链接已复制到剪贴板', 'success', 2000);
+        } catch (e) {
+            showToast('复制失败，请手动复制', 'error', 2000);
+        }
+        document.body.removeChild(textarea);
+    }
 
     jumpButton.addEventListener('click', (event) => {
         if (!currentVupUrl || currentVupUrl === '#') {
