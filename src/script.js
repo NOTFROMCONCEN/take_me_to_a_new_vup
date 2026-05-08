@@ -143,8 +143,16 @@
         applyLang();
     }
 
-    // ── 头像路径（基于 UID） ──
-    function localAvatarPath(vup) {
+    // ── 头像路径（基于 UID，支持 WebP 和多尺寸） ──
+    function localAvatarPath(vup, size = 'card') {
+        const uid = vup.uid || '';
+        if (!uid) return '';
+        // 优先使用 WebP，回退到 JPG
+        const suffix = size === 'thumb' ? '@72w' : (size === 'card' ? '@140w' : '');
+        return `/face_img/${uid}${suffix}.webp`;
+    }
+
+    function localAvatarFallback(vup) {
         const uid = vup.uid || '';
         return uid ? `/face_img/${uid}.jpg` : '';
     }
@@ -186,15 +194,27 @@
     }
 
     function updateVupInfo(vup) {
-        const avatarPath = localAvatarPath(vup);
+        const avatarPath = localAvatarPath(vup, 'card');
+        const avatarFallback = localAvatarFallback(vup);
 
         avatarElement.alt = `${vup.name}的头像`;
+        // 使用 picture 元素的 srcset 逻辑（通过 data 属性）
+        avatarElement.dataset.src = avatarPath;
+        avatarElement.dataset.fallback = avatarFallback;
         avatarElement.src = avatarPath;
+        
+        let errorCount = 0;
         avatarElement.onerror = () => {
-            if (vup.avatar && avatarElement.src !== vup.avatar) {
+            errorCount++;
+            if (errorCount === 1 && avatarFallback) {
+                // WebP 失败，尝试本地 JPG
+                avatarElement.src = avatarFallback;
+            } else if (errorCount === 2 && vup.avatar && avatarElement.src !== vup.avatar) {
+                // 本地 JPG 失败，尝试 B 站 CDN
                 avatarElement.src = vup.avatar.replace(/^http:\/\//, 'https://');
+            } else {
+                avatarElement.onerror = null;
             }
-            avatarElement.onerror = null;
         };
         nameElement.textContent = vup.name;
         introElement.textContent = vup.intro || t('noIntro');
@@ -320,14 +340,22 @@
 
             const image = document.createElement('img');
             image.className = 'vup-grid-avatar';
-            image.src = localAvatarPath(vup);
+            const avatarPath = localAvatarPath(vup, 'thumb');
+            const avatarFallback = localAvatarFallback(vup);
+            image.src = avatarPath;
             image.alt = `${vup.name} 的头像`;
             image.loading = 'lazy';
+            image.dataset.fallback = avatarFallback;
+            let errorCount = 0;
             image.onerror = () => {
-                if (vup.avatar && image.src !== vup.avatar) {
+                errorCount++;
+                if (errorCount === 1 && avatarFallback) {
+                    image.src = avatarFallback;
+                } else if (errorCount === 2 && vup.avatar && image.src !== vup.avatar) {
                     image.src = vup.avatar.replace(/^http:\/\//, 'https://');
+                } else {
+                    image.onerror = null;
                 }
-                image.onerror = null;
             };
 
             const title = document.createElement('span');

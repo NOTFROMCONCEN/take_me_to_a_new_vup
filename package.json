@@ -10,14 +10,16 @@
         "vup": "node scripts/vup-manager.js",
         "prefetch": "node scripts/fetch-bilibili.js",
         "prefetch:force": "node scripts/fetch-bilibili.js --force",
+        "optimize-images": "node scripts/optimize-images.js",
         "build": "node build.js",
-        "deploy": "npm run prefetch && npm run build"
+        "deploy": "npm run prefetch && npm run optimize-images && npm run build"
     },
     "dependencies": {
         "express": "^4.19.2"
     },
     "devDependencies": {
-        "nodemon": "^3.1.0"
+        "nodemon": "^3.1.0",
+        "sharp": "^0.33.0"
     },
     "author": "Huameitang",
     "license": "MIT"

@@ -44,6 +44,18 @@ npm run prefetch
 npm run prefetch:force
 ```
 
+### 图片优化
+
+将头像转换为 WebP 格式并生成多种尺寸（缩略图 72px、卡片 140px、原图）：
+
+```bash
+npm run optimize-images
+```
+
+**注意**：图片优化需要安装 `sharp` 库：`npm install sharp --save-dev`
+
+优化后的图片会自动在构建时使用，可减少 30-50% 的体积。
+
 ### 交互式管理
 
 使用统一的 VUP 管理脚本：

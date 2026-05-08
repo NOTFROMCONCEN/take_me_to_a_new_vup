@@ -118,6 +118,13 @@ if (fs.existsSync(FACE_IMG)) {
         }
     }
     console.log(`✔  face_img/ (${count} files)`);
+    
+    // 检查是否存在优化后的 WebP 图片
+    const optimizedDir = path.join(DIST, 'face_img');
+    const webpFiles = fs.readdirSync(optimizedDir).filter(f => f.endsWith('.webp'));
+    if (webpFiles.length > 0) {
+        console.log(`✔  WebP 优化图片 (${webpFiles.length} files)`);
+    }
 } else {
     console.warn('⚠  face_img/ 不存在，头像将通过 B 站 CDN fallback 加载');
 }
