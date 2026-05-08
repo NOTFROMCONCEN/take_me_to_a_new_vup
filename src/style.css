@@ -545,3 +545,274 @@ body.modal-open {
 .vup-grid::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
 }
+
+/* ── 主题变量 ── */
+:root, [data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-secondary: #111827;
+    --bg-card: rgba(15, 23, 42, 0.82);
+    --bg-card-hover: rgba(17, 24, 39, 0.84);
+    --bg-input: rgba(15, 23, 42, 0.72);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.14);
+    --text-primary: #e5e7eb;
+    --text-secondary: rgba(229, 231, 235, 0.68);
+    --text-muted: rgba(229, 231, 235, 0.54);
+    --accent-primary: #f8fafc;
+    --accent-secondary: rgba(229, 231, 235, 0.82);
+    --shadow-color: rgba(0, 0, 0, 0.18);
+    --orb-1: rgba(56, 189, 248, 0.12);
+    --orb-2: rgba(255, 255, 255, 0.05);
+    --orb-3: rgba(148, 163, 184, 0.09);
+}
+
+[data-theme="light"] {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --bg-card-hover: rgba(255, 255, 255, 0.95);
+    --bg-input: rgba(255, 255, 255, 0.8);
+    --border-color: rgba(0, 0, 0, 0.08);
+    --border-hover: rgba(0, 0, 0, 0.14);
+    --text-primary: #1e293b;
+    --text-secondary: rgba(30, 41, 59, 0.7);
+    --text-muted: rgba(30, 41, 59, 0.5);
+    --accent-primary: #0f172a;
+    --accent-secondary: rgba(30, 41, 59, 0.82);
+    --shadow-color: rgba(0, 0, 0, 0.08);
+    --orb-1: rgba(56, 189, 248, 0.15);
+    --orb-2: rgba(148, 163, 184, 0.08);
+    --orb-3: rgba(99, 102, 241, 0.1);
+}
+
+/* ── 主题应用 ── */
+body {
+    background:
+        radial-gradient(circle at top, var(--orb-1), transparent 34%),
+        linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    color: var(--text-primary);
+}
+
+.orb-1 {
+    background: radial-gradient(circle, var(--orb-1) 0%, transparent 72%);
+}
+
+.orb-2 {
+    background: radial-gradient(circle, var(--orb-2) 0%, transparent 70%);
+}
+
+.orb-3 {
+    background: radial-gradient(circle, var(--orb-3) 0%, transparent 70%);
+}
+
+.topbar-btn {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.topbar-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+}
+
+.clock-chip {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 18px 48px var(--shadow-color);
+}
+
+.vup-name {
+    color: var(--text-primary);
+}
+
+.vup-intro {
+    color: var(--text-secondary);
+}
+
+.countdown-num {
+    color: var(--accent-primary);
+}
+
+.countdown-label {
+    color: var(--text-muted);
+}
+
+.btn-primary {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+}
+
+.btn-primary:hover {
+    background: var(--text-secondary);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--accent-secondary);
+    border-color: var(--border-color);
+}
+
+.btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-hover);
+}
+
+.all-vup-overlay {
+    background: rgba(2, 6, 23, 0.62);
+}
+
+[data-theme="light"] .all-vup-overlay {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.all-vup-panel {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 20px 56px var(--shadow-color);
+}
+
+.panel-title {
+    color: var(--text-primary);
+}
+
+.panel-close {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.panel-close:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-hover);
+}
+
+.vup-grid-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--border-color);
+}
+
+[data-theme="light"] .vup-grid-item {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.vup-grid-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-hover);
+}
+
+[data-theme="light"] .vup-grid-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.vup-grid-name {
+    color: var(--accent-primary);
+}
+
+.vup-grid-intro {
+    color: var(--text-secondary);
+}
+
+/* ── 新增 UI 元素 ── */
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topbar-icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.topbar-icon-btn:hover {
+    transform: scale(1.05);
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+}
+
+.panel-toolbar {
+    margin-bottom: 16px;
+}
+
+.vup-search {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.vup-search::placeholder {
+    color: var(--text-muted);
+}
+
+.vup-search:focus {
+    border-color: var(--border-hover);
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.15);
+}
+
+.tag-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tag-btn {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.16s ease;
+}
+
+.tag-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+
+.tag-btn.active {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    border-color: var(--accent-primary);
+}
+
+.vup-grid-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* ── 卡片切换动画 ── */
+.card {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}

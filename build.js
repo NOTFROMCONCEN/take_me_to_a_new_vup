@@ -96,8 +96,11 @@ fs.mkdirSync(path.join(DIST, 'face_img'), { recursive: true });
 
 // ── src/ 前端文件平铺到 dist/ ────────────────────────────
 for (const file of fs.readdirSync(SRC)) {
-    fs.copyFileSync(path.join(SRC, file), path.join(DIST, file));
-    console.log(`✔  ${file}`);
+    const srcFile = path.join(SRC, file);
+    if (fs.statSync(srcFile).isFile()) {
+        fs.copyFileSync(srcFile, path.join(DIST, file));
+        console.log(`✔  ${file}`);
+    }
 }
 
 // ── data/vup.json ────────────────────────────────────────

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -8,6 +8,13 @@
     <meta name="description" content="随机将你带到一个 VUP 的 Bilibili 主页，发现新的虚拟主播！">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
+    <!-- Open Graph -->
+    <meta property="og:title" content="带我去一个VUP主页">
+    <meta property="og:description" content="随机将你带到一个 VUP 的 Bilibili 主页，发现新的虚拟主播！">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_CN">
+    <meta property="og:locale:alternate" content="en_US">
+    <!-- Preconnect -->
     <link rel="preconnect" href="https://i0.hdslb.com" crossorigin>
     <link rel="preconnect" href="https://i1.hdslb.com" crossorigin>
     <link rel="preconnect" href="https://i2.hdslb.com" crossorigin>
@@ -31,9 +38,13 @@
                 <rect x="3" y="14" width="7" height="7" rx="1.5" />
                 <rect x="14" y="14" width="7" height="7" rx="1.5" />
             </svg>
-            <span>展示所有 VUP</span>
+            <span id="show-all-label">展示所有 VUP</span>
         </button>
-        <div class="clock-chip" id="clock-chip" aria-live="polite">--:--:--</div>
+        <div class="topbar-right">
+            <button class="topbar-icon-btn" id="theme-toggle" type="button" aria-label="切换主题">☀️</button>
+            <button class="topbar-icon-btn" id="lang-toggle" type="button" aria-label="切换语言">EN</button>
+            <div class="clock-chip" id="clock-chip" aria-live="polite">--:--:--</div>
+        </div>
     </div>
 
     <main class="card">
@@ -54,7 +65,7 @@
             </div>
             <div class="countdown-display">
                 <span id="countdown" class="countdown-num">10</span>
-                <span class="countdown-label">秒后跳转</span>
+                <span id="countdown-label" class="countdown-label">秒后跳转</span>
             </div>
         </div>
 
@@ -67,13 +78,13 @@
             <p id="intro" class="vup-intro"></p>
             <div class="button-group">
                 <a id="jump-button" href="#" class="btn btn-primary">
-                    <span>立即跳转</span>
+                    <span id="jump-label">立即跳转</span>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                 </a>
-                <a id="change-button" href="#" class="btn btn-ghost">换一个</a>
+                <a id="change-button" href="#" class="btn btn-ghost"><span id="change-label">换一个</span></a>
             </div>
         </div>
     </main>
@@ -82,7 +93,7 @@
     <div class="all-vup-overlay" id="all-vup-overlay" aria-hidden="true">
         <div class="all-vup-panel" role="dialog" aria-modal="true" aria-label="全部VUP列表">
             <div class="panel-header">
-                <h2 class="panel-title">全部 VUP / VTB</h2>
+                <h2 class="panel-title" id="panel-title">全部 VUP / VTB</h2>
                 <button class="panel-close" id="panel-close-btn" aria-label="关闭">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -90,6 +101,11 @@
                     </svg>
                 </button>
             </div>
+            <div class="panel-toolbar">
+                <input type="search" id="vup-search" class="vup-search" placeholder="搜索名称或简介…"
+                    autocomplete="off" spellcheck="false">
+            </div>
+            <div class="tag-filter" id="tag-filter"></div>
             <div class="vup-grid" id="vup-grid"></div>
         </div>
     </div>

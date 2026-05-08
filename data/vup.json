@@ -1,110 +1,146 @@
 [
     {
         "name": "嘉然Diana",
+        "uid": "672328094",
         "url": "https://space.bilibili.com/672328094",
         "avatar": "https://i2.hdslb.com/bfs/face/619f378852ebac9fdf87e20418d6f99bfa750c7f.jpg",
-        "intro": "这里是嘉然！别看我小小的，我超能吃还超可爱的哦~"
+        "intro": "这里是嘉然！别看我小小的，我超能吃还超可爱的哦~",
+        "tags": ["A-SOUL", "虚拟偶像"]
     },
     {
         "name": "向晚AvA",
+        "uid": "672346917",
         "url": "https://space.bilibili.com/672346917",
         "avatar": "https://i0.hdslb.com/bfs/face/599aa32d217cdf6c8ce113b37aca5b19b9f07b3e.jpg",
-        "intro": "今天，也依然要轻松快乐啊~"
+        "intro": "今天，也依然要轻松快乐啊~",
+        "tags": ["A-SOUL", "虚拟偶像"]
     },
     {
         "name": "贝拉Bella",
+        "uid": "672353429",
         "url": "https://space.bilibili.com/672353429",
         "avatar": "https://i2.hdslb.com/bfs/face/0210084eec71d49f1db2a1e528fa42ac80b2fc9c.jpg",
-        "intro": "元气满满的A-SOUL舞担参上~目标TOP IDOL，一起加油！"
+        "intro": "元气满满的A-SOUL舞担参上~目标TOP IDOL，一起加油！",
+        "tags": ["A-SOUL", "虚拟偶像"]
     },
     {
         "name": "乃琳Eileen",
+        "uid": "672342685",
         "url": "https://space.bilibili.com/672342685",
         "avatar": "https://i1.hdslb.com/bfs/face/83d32ed15b3534267d2c5b1cf1a07a9c1e389fb0.jpg",
-        "intro": "喜欢听你说，开心和不开心的，都告诉我吧~"
+        "intro": "喜欢听你说，开心和不开心的，都告诉我吧~",
+        "tags": ["A-SOUL", "虚拟偶像"]
     },
     {
         "name": "一只塔娅娅su",
+        "uid": "3546555191659421",
         "url": "https://space.bilibili.com/3546555191659421",
         "avatar": "https://i2.hdslb.com/bfs/face/c1e82c557bfb1deb624d650bdfde5b59d6c8c05f.jpg",
-        "intro": "是coser也是Vup，会跳舞，虚拟形象是一台✟心电机偶像✟，晚上十点前上播，合作私。10w粉cos皮套或读评论（？）"
+        "intro": "是coser也是Vup，会跳舞，虚拟形象是一台✟心电机偶像✟，晚上十点前上播，合作私。10w粉cos皮套或读评论（？）",
+        "tags": ["个人势", "coser"]
     },
     {
         "name": "绛洢Jin_",
+        "uid": "87874065",
         "url": "https://space.bilibili.com/87874065",
         "avatar": "https://i0.hdslb.com/bfs/face/820db212e32a1e239a398155319c5ee6e0b57f61.jpg",
-        "intro": "SpRing所属｜“于尘世灰烬中，欢愉是唯一不灭的星火。”\n混沌养成系丨会永远努力开发属性的更多可能\n粉丝群：1053630553"
+        "intro": "SpRing所属｜「于尘世灰烬中，欢愉是唯一不灭的星火。」\n混沌养成系丨会永远努力开发属性的更多可能\n粉丝群：1053630553",
+        "tags": ["SpRing", "企业势"]
     },
     {
         "name": "珈乐Carol",
+        "uid": "351609538",
         "url": "https://space.bilibili.com/351609538",
         "avatar": "https://i1.hdslb.com/bfs/face/a7fea00016a8d3ffb015b6ed8647cc3ed89cbc63.jpg",
-        "intro": "休眠。独一无二的小狼公主，晚安。"
+        "intro": "休眠。独一无二的小狼公主，晚安。",
+        "tags": ["A-SOUL", "虚拟偶像"]
     },
     {
         "name": "七海Nana7mi",
+        "uid": "434334701",
         "url": "https://space.bilibili.com/434334701",
         "avatar": "https://i2.hdslb.com/bfs/face/8131207411160e7683e96387fb611ee9cd39625a.jpg",
-        "intro": "虚拟艺人团体VirtuaReal成员 七海Nana7mi\n商务合作：bd@vrp.live"
+        "intro": "虚拟艺人团体VirtuaReal成员 七海Nana7mi\n商务合作：bd@vrp.live",
+        "tags": ["VirtuaReal", "企业势"]
     },
     {
         "name": "彼岸山羊",
+        "uid": "403478491",
         "url": "https://space.bilibili.com/403478491",
         "avatar": "https://i1.hdslb.com/bfs/face/455eef7f1c9b919902b14f77f3f41776a94bd770.jpg",
-        "intro": "爱打游戏的xnn，随缘播，群1058402699"
+        "intro": "爱打游戏的xnn，随缘播，群1058402699",
+        "tags": ["个人势", "游戏"]
     },
     {
         "name": "想单推坏女人的话梅糖",
+        "uid": "35490984",
         "url": "https://space.bilibili.com/35490984",
         "avatar": "https://i0.hdslb.com/bfs/face/eb243432c7982f1baa8a9b209cd1ca6df130cee9.jpg",
-        "intro": "错过的永远错过（免费的开播推送bot，免费为各种小v解决开播和电脑疑难杂症，有需要联系Q：1097681347"
+        "intro": "错过的永远错过（免费的开刊推送bot，免费为各种小v解决开播和电脑疑难杂症，有需要联系Q：1097681347",
+        "tags": ["个人势"]
     },
     {
         "name": "纪夫Junly",
+        "uid": "19512037",
         "url": "https://space.bilibili.com/19512037",
         "avatar": "https://i1.hdslb.com/bfs/face/2295262c6bedabb04a1a3197d0c3167971f5214f.jpg",
-        "intro": "哇，你发现我啦O▽O"
+        "intro": "哇，你发现我啦O▽O",
+        "tags": ["个人势"]
     },
     {
         "name": "马蚤火火Office",
+        "uid": "11280430",
         "url": "https://space.bilibili.com/11280430",
         "avatar": "https://i1.hdslb.com/bfs/face/ee4ab997ef5016ef5af75402adf42082e00da3b3.jpg",
-        "intro": "左边是哪边啊！左边是右边吗？\n群: 1043894139"
+        "intro": "左边是哪边啊！左边是右边吗？\n群: 1043894139",
+        "tags": ["个人势"]
     },
     {
         "name": "耒木official",
+        "uid": "3461567010048193",
         "url": "https://space.bilibili.com/3461567010048193",
         "avatar": "https://i1.hdslb.com/bfs/face/c93ddcf3d688bf6027be54272de6d47e8170ef5d.jpg",
-        "intro": "粉丝群在动态扫码，生日看私信哦，群快满了，给up充电帮助up解锁超级大群哦！"
+        "intro": "粉丝群在动态扫码，生日看私信哦，群快满了，给up充电帮助up解锁超级大群哦！",
+        "tags": ["个人势"]
     },
     {
         "name": "汀汀汀TTT",
+        "uid": "3494349511854939",
         "url": "https://space.bilibili.com/3494349511854939",
         "avatar": "https://i0.hdslb.com/bfs/face/8110312aa39eb4707b7cc589123aeefeb344c3e0.jpg",
-        "intro": "psplive所属打鼓小猫。打瓦加我。喜欢街机音游！直播通知群649854227 【商业合作VX：PSP-Pennatus】"
+        "intro": "psplive所属打鼓小猫。打瓦加我。喜欢街机音游！直播通知群649854227 【商业合作VX：PSP-Pennatus】",
+        "tags": ["psplive", "企业势"]
     },
     {
         "name": "缇莲娜喵喵Tirenya_",
+        "uid": "3494357346814544",
         "url": "https://space.bilibili.com/3494357346814544",
         "avatar": "https://i2.hdslb.com/bfs/face/4addceccd61d5fe9d824d30605dd821e7a0bbd40.jpg",
-        "intro": "累了喵？猫窝里很暖和的，来休息一下吧！群号：927622501 答案→私信回复：加群 （可恶的syy，必须给你染上糖鼻小猫）"
+        "intro": "累了喵？猫窝里很暖和的，来休息一下吧！群号：927622501 答案→私信回复：加群 （可恶的syy，必须给你染上糖鼻小猫）",
+        "tags": ["个人势"]
     },
     {
         "name": "诡诡和幺幺",
+        "uid": "3706923597695322",
         "url": "https://space.bilibili.com/3706923597695322",
         "avatar": "https://i0.hdslb.com/bfs/face/4e869fb24daace2baee1b6406e004be423de22e9.jpg",
-        "intro": "姐妹盖饭的说，我是诡诡和妹妹幺幺！希望可能给大家带来些许快乐  直播时间9：00-13：00\n粉丝群：494535950"
+        "intro": "姐妹盖饭的说，我是诡诡和妹妹幺幺！希望可能给大家带来些许快乐  直播时间9：00-13：00\n粉丝群：494535950",
+        "tags": ["个人势"]
     },
     {
         "name": "呆呆酥琪Sukey",
+        "uid": "3706949988256139",
         "url": "https://space.bilibili.com/3706949988256139",
         "avatar": "https://i2.hdslb.com/bfs/face/f9aeb7b57476eb2f680c5a35dd0e8125034bd8c6.jpg",
-        "intro": "QQ粉丝群：1090443937\n这里是酥琪\n人家这么可爱，当然是男孩子啦\n新人up，现在关注以后就是老粉啦！\n全网同名"
+        "intro": "QQ粉丝群：1090443937\n这里是酥琪\n人家这么可爱，当然是男孩子啦\n新人up，现在关注以后就是老粉啦！\n全网同名",
+        "tags": ["个人势"]
     },
     {
         "name": "泡芙泡芙ya",
+        "uid": "3691005465332579",
         "url": "https://space.bilibili.com/3691005465332579",
         "avatar": "https://i2.hdslb.com/bfs/face/d4f99c02fd70c5634c8e1805b5c06fa7925f6aa9.jpg",
-        "intro": "每天晚上12~4点，想成为温暖你的小太阳，泡芙q群:719481725\n我的心意牵引你来到这里，喜欢的话请点点关注吧~"
+        "intro": "每天晚上12~4点，想成为温暖你的小太阳，泡芙q群:719481725\n我的心意牵引你来到这里，喜欢的话请点点关注吧~",
+        "tags": ["个人势"]
     }
 ]

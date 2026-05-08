@@ -2,9 +2,9 @@
  * 构建前数据预取脚本
  *
  * 从 data/vup.json 读取所有 VUP 条目，
- * 根据 Bilibili 空间 URL 中的 UID 调用公开卡片接口，
+ * 根据 uid 字段调用 B 站公开卡片接口，
  * 自动更新头像（avatar）、签名（intro），
- * 并将头像下载到 face_img/。
+ * 并将头像下载到 face_img/（文件名为 {uid}.jpg）。
  *
  * 用法：
  *   node scripts/fetch-bilibili.js          # 更新全部
