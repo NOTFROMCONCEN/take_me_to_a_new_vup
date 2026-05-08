@@ -85,6 +85,8 @@
     const countdownLabel = document.getElementById('countdown-label');
     const panelTitleElement = document.getElementById('panel-title');
     const a11yAnnouncer = document.getElementById('a11y-announcer');
+    const pauseButton = document.getElementById('pause-btn');
+    const toastContainer = document.getElementById('toast-container');
 
     let countdown = COUNTDOWN_SECONDS;
     let timerId = null;
@@ -93,6 +95,7 @@
     let countdownTargetUrl = '#';
     let countdownPausedAt = null;
     let activeTag = '全部';
+    let isCountdownPaused = false;
 
     // ── 无障碍：屏幕阅读器公告 ──
     function announce(message) {
@@ -108,6 +111,28 @@
     function setFocus(element) {
         if (!element) return;
         element.focus({ preventScroll: false });
+    }
+
+    // ── Toast 通知 ──
+    function showToast(message, type = 'info', duration = 2500) {
+        if (!toastContainer) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        
+        // 触发动画
+        requestAnimationFrame(() => {
+            toast.classList.add('is-visible');
+        });
+        
+        // 自动消失
+        setTimeout(() => {
+            toast.classList.remove('is-visible');
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 300);
+        }, duration);
     }
 
     // ── 主题 ──
@@ -214,6 +239,7 @@
             nameElement.textContent = t('loadFailed');
             introElement.textContent = t('loadFailedDesc');
             countdownElement.textContent = '--';
+            showToast(t('loadFailed'), 'error', 4000);
         }
     }
 
@@ -487,6 +513,35 @@
     }
 
     // ── 倒计时 ──
+    function togglePause() {
+        if (isCountdownPaused) {
+            // 恢复
+            isCountdownPaused = false;
+            resumeCountdown();
+            updatePauseButton(false);
+            showToast('倒计时已恢复', 'info', 1500);
+            announce('倒计时已恢复');
+        } else {
+            // 暂停
+            isCountdownPaused = true;
+            pauseCountdown();
+            updatePauseButton(true);
+            showToast('倒计时已暂停', 'info', 1500);
+            announce('倒计时已暂停');
+        }
+    }
+
+    function updatePauseButton(paused) {
+        if (!pauseButton) return;
+        pauseButton.classList.toggle('is-paused', paused);
+        pauseButton.setAttribute('aria-label', paused ? '恢复倒计时' : '暂停倒计时');
+        pauseButton.setAttribute('title', paused ? '恢复倒计时' : '暂停倒计时');
+        // 切换图标：暂停 ▶ / 播放 ⏸
+        pauseButton.innerHTML = paused
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>';
+    }
+
     function pauseCountdown() {
         if (timerId !== null) {
             clearInterval(timerId);
@@ -507,6 +562,9 @@
         clearInterval(timerId);
         countdownTargetUrl = url;
         countdown = COUNTDOWN_SECONDS;
+        isCountdownPaused = false;
+        countdownPausedAt = null;
+        updatePauseButton(false);
         ringEl.style.strokeDashoffset = 0;
         countdownElement.textContent = countdown;
         timerId = setInterval(() => {
@@ -544,6 +602,10 @@
         event.preventDefault();
         pickAnother();
     });
+
+    if (pauseButton) {
+        pauseButton.addEventListener('click', togglePause);
+    }
 
     showAllButton.addEventListener('click', () => {
         if (allVupsCache.length === 0) return;

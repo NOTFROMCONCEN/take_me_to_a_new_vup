@@ -79,6 +79,12 @@
             <div class="countdown-display" aria-live="off">
                 <span id="countdown" class="countdown-num" aria-label="倒计时秒数">10</span>
                 <span id="countdown-label" class="countdown-label">秒后跳转</span>
+                <button id="pause-btn" class="pause-btn" type="button" aria-label="暂停倒计时" title="暂停倒计时">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <rect x="6" y="4" width="4" height="16" rx="1" />
+                        <rect x="14" y="4" width="4" height="16" rx="1" />
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -122,6 +128,9 @@
             <div class="vup-grid" id="vup-grid"></div>
         </div>
     </div>
+
+    <!-- Toast 通知容器 -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
     <script src="/script.js" defer></script>
 </body>
