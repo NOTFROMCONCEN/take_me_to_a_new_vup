@@ -11,6 +11,9 @@
         "prefetch": "node scripts/fetch-bilibili.js",
         "prefetch:force": "node scripts/fetch-bilibili.js --force",
         "optimize-images": "node scripts/optimize-images.js",
+        "validate": "node scripts/vup-manager.js validate",
+        "export-data": "node scripts/vup-manager.js export",
+        "import-data": "node scripts/vup-manager.js import",
         "build": "node build.js",
         "deploy": "npm run prefetch && npm run optimize-images && npm run build"
     },

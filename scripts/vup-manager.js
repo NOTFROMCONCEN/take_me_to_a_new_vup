@@ -386,6 +386,9 @@ VUP 管理脚本
   update --uid <uid> [--force]      更新单个 VUP 的头像与简介
   update-all [--force]              更新全部 VUP 的头像与简介
   list                              列出当前所有 VUP
+  validate                          验证 vup.json 数据完整性
+  export [--output <路径>]          导出 VUP 数据为独立 JSON 文件
+  import --input <路径>             从 JSON 文件导入 VUP 数据
 
 可选参数：
   --intro <文本>                    新增或更新时手动覆盖简介
@@ -397,7 +400,138 @@ VUP 管理脚本
   node scripts/vup-manager.js add --uid 672328094 --name 嘉然Diana
   node scripts/vup-manager.js update --uid 672328094 --force
   node scripts/vup-manager.js remove --uid 672328094 --keep-avatar
+  node scripts/vup-manager.js validate
+  node scripts/vup-manager.js export --output backup.json
+  node scripts/vup-manager.js import --input backup.json
 `);
+}
+
+// ── 数据验证 ──
+function commandValidate() {
+    const vups = loadVups();
+    let errors = 0;
+    let warnings = 0;
+
+    console.log(`\n验证 ${vups.length} 个 VUP 条目...\n`);
+
+    // 检查 UID 唯一性
+    const uidMap = new Map();
+    for (const vup of vups) {
+        const uid = vup.uid || '';
+        if (!uid) {
+            console.log(`  ❌ ${vup.name || '未知'}: 缺少 uid 字段`);
+            errors++;
+            continue;
+        }
+        if (uidMap.has(uid)) {
+            console.log(`  ❌ UID ${uid} 重复: ${vup.name} 和 ${uidMap.get(uid)}`);
+            errors++;
+        }
+        uidMap.set(uid, vup.name);
+    }
+
+    // 检查必填字段
+    for (const vup of vups) {
+        if (!vup.name) {
+            console.log(`  ❌ UID ${vup.uid}: 缺少 name 字段`);
+            errors++;
+        }
+        if (!vup.url) {
+            console.log(`  ❌ ${vup.name}: 缺少 url 字段`);
+            errors++;
+        } else if (!vup.url.includes('bilibili.com')) {
+            console.log(`  ⚠️  ${vup.name}: url 不是 Bilibili 链接`);
+            warnings++;
+        }
+        if (!vup.avatar) {
+            console.log(`  ⚠️  ${vup.name}: 缺少 avatar 字段`);
+            warnings++;
+        }
+        if (!vup.intro) {
+            console.log(`  ⚠️  ${vup.name}: 缺少 intro 字段`);
+            warnings++;
+        }
+        if (!Array.isArray(vup.tags) || vup.tags.length === 0) {
+            console.log(`  ⚠️  ${vup.name}: 缺少 tags 字段`);
+            warnings++;
+        }
+    }
+
+    // 检查头像文件
+    const faceFiles = fs.readdirSync(FACE_IMG_DIR).filter(f => f.endsWith('.jpg'));
+    for (const vup of vups) {
+        const expectedFile = `${vup.uid}.jpg`;
+        if (!faceFiles.includes(expectedFile)) {
+            console.log(`  ⚠️  ${vup.name}: 缺少头像文件 ${expectedFile}`);
+            warnings++;
+        }
+    }
+
+    console.log(`\n── 验证结果 ──`);
+    console.log(`  条目数: ${vups.length}`);
+    console.log(`  错误: ${errors}`);
+    console.log(`  警告: ${warnings}`);
+    if (errors === 0 && warnings === 0) {
+        console.log('  ✅ 所有数据验证通过！');
+    }
+    console.log('');
+}
+
+// ── 数据导出 ──
+function commandExport(options) {
+    const vups = loadVups();
+    const outputPath = options.output || path.join(ROOT, 'data', `vup-export-${Date.now()}.json`);
+    
+    const exportData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        count: vups.length,
+        data: vups
+    };
+    
+    fs.writeFileSync(outputPath, JSON.stringify(exportData, null, 2), 'utf-8');
+    console.log(`✔ 已导出 ${vups.length} 个 VUP 到 ${outputPath}`);
+}
+
+// ── 数据导入 ──
+function commandImport(options) {
+    const inputPath = requireOption(options, 'input', '请指定 --input <路径>');
+    if (!fs.existsSync(inputPath)) {
+        throw new Error(`文件不存在: ${inputPath}`);
+    }
+
+    const raw = fs.readFileSync(inputPath, 'utf-8');
+    const imported = JSON.parse(raw);
+
+    // 支持两种格式：数组或带 metadata 的对象
+    const newVups = Array.isArray(imported) ? imported : (imported.data || []);
+    if (!Array.isArray(newVups) || newVups.length === 0) {
+        throw new Error('导入文件中没有有效的 VUP 数据');
+    }
+
+    const existing = loadVups();
+    const existingUids = new Set(existing.map(v => v.uid));
+    
+    let added = 0;
+    let skipped = 0;
+    
+    for (const vup of newVups) {
+        if (!vup.uid || existingUids.has(vup.uid)) {
+            console.log(`  ⏭ 跳过 ${vup.name || vup.uid}（已存在或缺少 UID）`);
+            skipped++;
+            continue;
+        }
+        existing.push(vup);
+        console.log(`  ✔ 新增 ${vup.name} (${vup.uid})`);
+        added++;
+    }
+
+    if (added > 0) {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(existing, null, 4), 'utf-8');
+        console.log(`\n✔ 导入完成：新增 ${added} 个，跳过 ${skipped} 个`);
+    } else {
+        console.log(`\n没有新的 VUP 需要导入（跳过 ${skipped} 个）`);
+    }
 }
 
 async function main() {
@@ -426,6 +560,15 @@ async function main() {
             return;
         case 'list':
             commandList();
+            return;
+        case 'validate':
+            commandValidate();
+            return;
+        case 'export':
+            commandExport(options);
+            return;
+        case 'import':
+            commandImport(options);
             return;
         default:
             throw new Error(`未知命令：${command}`);
