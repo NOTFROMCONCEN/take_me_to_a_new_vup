@@ -260,19 +260,26 @@
         const selectedVup = available[Math.floor(Math.random() * available.length)];
         localStorage.setItem('lastVupName', selectedVup.name);
 
-        // 卡片切换动画
+        // 卡片切换动画 - 使用 CSS 类优化性能
         const card = document.querySelector('.card');
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(15px)';
-
-        setTimeout(() => {
-            updateVupInfo(selectedVup);
-            startCountdown(selectedVup.url);
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-            // 无障碍：将焦点移到卡片，便于键盘用户
-            setFocus(card);
-        }, 200);
+        card.classList.add('card-exit');
+        
+        // 使用 requestAnimationFrame 确保动画流畅
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                updateVupInfo(selectedVup);
+                startCountdown(selectedVup.url);
+                card.classList.remove('card-exit');
+                card.classList.add('card-enter');
+                
+                // 动画结束后移除类
+                setTimeout(() => {
+                    card.classList.remove('card-enter');
+                    // 无障碍：将焦点移到卡片，便于键盘用户
+                    setFocus(card);
+                }, 300);
+            }, 200);
+        });
     }
 
     // ── 标签筛选 ──
@@ -297,6 +304,9 @@
         tagFilterElement.setAttribute('role', 'group');
         tagFilterElement.setAttribute('aria-label', '按标签筛选 VUP');
 
+        // 使用 DocumentFragment 减少 DOM 操作次数
+        const fragment = document.createDocumentFragment();
+
         const allBtn = document.createElement('button');
         allBtn.className = 'tag-btn active';
         allBtn.textContent = t('allTags');
@@ -307,7 +317,7 @@
             updateTagButtons();
             announce(`已显示全部 ${allVupsCache.length} 个 VUP`);
         });
-        tagFilterElement.appendChild(allBtn);
+        fragment.appendChild(allBtn);
 
         for (const tag of tags) {
             const btn = document.createElement('button');
@@ -323,8 +333,11 @@
                 updateTagButtons();
                 announce(`已筛选标签"${tag}"，共 ${filtered.length} 个 VUP`);
             });
-            tagFilterElement.appendChild(btn);
+            fragment.appendChild(btn);
         }
+
+        // 一次性添加所有元素到 DOM
+        tagFilterElement.appendChild(fragment);
     }
 
     function updateTagButtons() {
@@ -359,7 +372,7 @@
         return vups;
     }
 
-    // ── VUP 网格渲染 ──
+    // ── VUP 网格渲染（性能优化：使用 DocumentFragment） ──
     function renderVupGrid(vups) {
         vupGridElement.innerHTML = '';
         
@@ -376,6 +389,9 @@
             vupGridElement.appendChild(empty);
             return;
         }
+
+        // 使用 DocumentFragment 减少 DOM 操作次数
+        const fragment = document.createDocumentFragment();
 
         for (const vup of vups) {
             const card = document.createElement('a');
@@ -417,8 +433,11 @@
             intro.setAttribute('aria-hidden', 'true');
 
             card.append(image, title, intro);
-            vupGridElement.append(card);
+            fragment.append(card);
         }
+
+        // 一次性添加所有元素到 DOM
+        vupGridElement.append(fragment);
     }
 
     // ── 弹窗 ──

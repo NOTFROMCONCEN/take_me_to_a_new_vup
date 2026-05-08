@@ -203,12 +203,29 @@ body.modal-open {
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     box-shadow: 0 18px 48px rgba(0,0,0,0.28);
+    will-change: transform, opacity;
     animation: card-enter 0.4s ease-out forwards;
 }
 
 @keyframes card-enter {
     from { opacity: 0; transform: translateY(30px) scale(0.95); }
     to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Card switch animations (performance optimized) ── */
+.card-exit {
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.card-enter {
+    animation: card-switch-in 0.3s ease-out forwards;
+}
+
+@keyframes card-switch-in {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Left column ── */
@@ -254,6 +271,7 @@ body.modal-open {
     height: 100%;
     transform: rotate(-90deg);
     overflow: visible;
+    will-change: transform;
 }
 
 .ring-track {
@@ -269,6 +287,7 @@ body.modal-open {
     stroke-linecap: round;
     stroke-dasharray: 339.3;
     stroke-dashoffset: 0;
+    will-change: stroke-dashoffset;
     transition: stroke-dashoffset 0.95s linear;
 }
 
@@ -365,6 +384,10 @@ body.modal-open {
     user-select: none;
 }
 
+.btn:hover {
+    will-change: transform;
+}
+
 .btn:active {
     transform: scale(0.96) !important;
 }
@@ -420,6 +443,7 @@ body.modal-open {
     -webkit-backdrop-filter: blur(8px);
     opacity: 0;
     visibility: hidden;
+    will-change: opacity;
     transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
@@ -437,6 +461,7 @@ body.modal-open {
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow: 0 20px 56px rgba(0,0,0,0.28);
     overflow: hidden;
+    will-change: transform;
 }
 
 .panel-header {
@@ -477,6 +502,9 @@ body.modal-open {
     max-height: calc(82vh - 108px);
     overflow: auto;
     padding-right: 6px;
+    /* 性能优化：跳过视口外内容的渲染 */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
 }
 
 .vup-grid-item {
