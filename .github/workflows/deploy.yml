@@ -25,9 +25,6 @@ jobs:
               run: npm run build
 
             - name: Deploy to EdgeOne Pages
-              uses: TencentCloud/edgeone-pages-action@v1
-              with:
-                  secret-id: ${{ secrets.EDGEONE_SECRET_ID }}
-                  secret-key: ${{ secrets.EDGEONE_SECRET_KEY }}
-                  zone-id: ${{ secrets.EDGEONE_ZONE_ID }}
-                  dist-dir: ./dist
+              run: npx edgeone pages deploy ./dist -n take-me-to-a-vup -t ${{ secrets.EDGEONE_API_TOKEN }}
+              env:
+                  EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}

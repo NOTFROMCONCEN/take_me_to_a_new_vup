@@ -168,10 +168,10 @@ async function build() {
     // 移除原有 preload link
     htmlContent = htmlContent.replace(/\s*<link rel="preload" href="\/style\.css" as="style">\n/, '\n');
 
-    // 替换 stylesheet link 为带哈希版本，使用 media="print" 技巧异步加载
+    // 替换 stylesheet link 为带哈希版本（CSP 限制内联脚本，不使用 media="print" 技巧）
     htmlContent = htmlContent.replace(
         '<link rel="stylesheet" href="/style.css">',
-        `<style>${criticalCss}</style>\n    <link rel="stylesheet" href="/${cssFileName}" media="print" onload="this.media='all'">\n    <noscript><link rel="stylesheet" href="/${cssFileName}"></noscript>`
+        `<style>${criticalCss}</style>\n    <link rel="stylesheet" href="/${cssFileName}">`
     );
 
     // 替换 script src 为带哈希版本
