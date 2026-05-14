@@ -28,7 +28,7 @@ const FACE_IMG_DIR = path.join(ROOT, 'face_img');
 const API_DELAY_MS = 800;
 
 function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function parseArgs(argv) {
@@ -37,7 +37,9 @@ function parseArgs(argv) {
 
     for (let i = 0; i < rest.length; i++) {
         const token = rest[i];
-        if (!token.startsWith('--')) continue;
+        if (!token.startsWith('--')) {
+            continue;
+        }
 
         const key = token.slice(2);
         const next = rest[i + 1];
@@ -77,33 +79,40 @@ function buildSpaceUrl(uid) {
 }
 
 function safeAvatarUrl(url) {
-    return String(url || '').replace(/^http:\/\//, 'https://').replace(/@.*$/, '');
+    return String(url || '')
+        .replace(/^http:\/\//, 'https://')
+        .replace(/@.*$/, '');
 }
 
 function getJson(url) {
     return new Promise((resolve, reject) => {
-        const req = https.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Referer': 'https://www.bilibili.com',
-                'Origin': 'https://www.bilibili.com'
-            }
-        }, res => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                if (res.statusCode !== 200) {
-                    reject(new Error(`HTTP ${res.statusCode}`));
-                    return;
+        const req = https.get(
+            url,
+            {
+                headers: {
+                    'User-Agent':
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    Referer: 'https://www.bilibili.com',
+                    Origin: 'https://www.bilibili.com'
                 }
+            },
+            (res) => {
+                let data = '';
+                res.on('data', (chunk) => (data += chunk));
+                res.on('end', () => {
+                    if (res.statusCode !== 200) {
+                        reject(new Error(`HTTP ${res.statusCode}`));
+                        return;
+                    }
 
-                try {
-                    resolve(JSON.parse(data));
-                } catch (error) {
-                    reject(new Error(`JSON 解析失败: ${error.message}`));
-                }
-            });
-        });
+                    try {
+                        resolve(JSON.parse(data));
+                    } catch (error) {
+                        reject(new Error(`JSON 解析失败: ${error.message}`));
+                    }
+                });
+            }
+        );
 
         req.on('error', reject);
         req.setTimeout(15000, () => {
@@ -118,34 +127,41 @@ function downloadImage(url, destPath) {
 
     return new Promise((resolve, reject) => {
         const file = fs.createWriteStream(destPath);
-        const req = https.get(avatarUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Referer': 'https://space.bilibili.com'
-            }
-        }, res => {
-            if (res.statusCode === 301 || res.statusCode === 302) {
-                file.close();
-                fs.unlink(destPath, () => {});
-                downloadImage(res.headers.location || avatarUrl, destPath).then(resolve).catch(reject);
-                return;
-            }
+        const req = https.get(
+            avatarUrl,
+            {
+                headers: {
+                    'User-Agent':
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    Referer: 'https://space.bilibili.com'
+                }
+            },
+            (res) => {
+                if (res.statusCode === 301 || res.statusCode === 302) {
+                    file.close();
+                    fs.unlink(destPath, () => {});
+                    downloadImage(res.headers.location || avatarUrl, destPath)
+                        .then(resolve)
+                        .catch(reject);
+                    return;
+                }
 
-            if (res.statusCode !== 200) {
-                file.close();
-                fs.unlink(destPath, () => {});
-                reject(new Error(`头像下载失败: HTTP ${res.statusCode}`));
-                return;
+                if (res.statusCode !== 200) {
+                    file.close();
+                    fs.unlink(destPath, () => {});
+                    reject(new Error(`头像下载失败: HTTP ${res.statusCode}`));
+                    return;
+                }
+
+                res.pipe(file);
+                file.on('finish', () => {
+                    file.close();
+                    resolve();
+                });
             }
+        );
 
-            res.pipe(file);
-            file.on('finish', () => {
-                file.close();
-                resolve();
-            });
-        });
-
-        req.on('error', error => {
+        req.on('error', (error) => {
             file.close();
             fs.unlink(destPath, () => {});
             reject(error);
@@ -211,7 +227,7 @@ function printEntry(prefix, entry) {
 async function commandSearch(options) {
     const uid = ensureUid(requireOption(options, 'uid'));
     const remote = await fetchBilibiliCard(uid);
-    const local = loadVups().find(item => uidFromUrl(item.url) === uid);
+    const local = loadVups().find((item) => uidFromUrl(item.url) === uid);
 
     console.log('B 站查询结果');
     printEntry('•', remote);
@@ -250,7 +266,7 @@ async function commandAdd(options) {
     const uid = ensureUid(requireOption(options, 'uid'));
     const vups = loadVups();
 
-    if (vups.some(item => uidFromUrl(item.url) === uid)) {
+    if (vups.some((item) => uidFromUrl(item.url) === uid)) {
         throw new Error(`UID ${uid} 已存在于 data/vup.json`);
     }
 
@@ -277,7 +293,7 @@ async function commandAdd(options) {
 async function commandRemove(options) {
     const uid = ensureUid(requireOption(options, 'uid'));
     const vups = loadVups();
-    const index = vups.findIndex(item => uidFromUrl(item.url) === uid);
+    const index = vups.findIndex((item) => uidFromUrl(item.url) === uid);
 
     if (index === -1) {
         throw new Error(`未找到 UID ${uid}`);
@@ -298,7 +314,7 @@ async function commandRemove(options) {
 async function commandUpdate(options) {
     const uid = ensureUid(requireOption(options, 'uid'));
     const vups = loadVups();
-    const entry = vups.find(item => uidFromUrl(item.url) === uid);
+    const entry = vups.find((item) => uidFromUrl(item.url) === uid);
 
     if (!entry) {
         throw new Error(`未找到 UID ${uid}`);
@@ -458,7 +474,7 @@ function commandValidate() {
     }
 
     // 检查头像文件
-    const faceFiles = fs.readdirSync(FACE_IMG_DIR).filter(f => f.endsWith('.jpg'));
+    const faceFiles = fs.readdirSync(FACE_IMG_DIR).filter((f) => f.endsWith('.jpg'));
     for (const vup of vups) {
         const expectedFile = `${vup.uid}.jpg`;
         if (!faceFiles.includes(expectedFile)) {
@@ -481,14 +497,14 @@ function commandValidate() {
 function commandExport(options) {
     const vups = loadVups();
     const outputPath = options.output || path.join(ROOT, 'data', `vup-export-${Date.now()}.json`);
-    
+
     const exportData = {
         version: '1.0',
         exportedAt: new Date().toISOString(),
         count: vups.length,
         data: vups
     };
-    
+
     fs.writeFileSync(outputPath, JSON.stringify(exportData, null, 2), 'utf-8');
     console.log(`✔ 已导出 ${vups.length} 个 VUP 到 ${outputPath}`);
 }
@@ -504,17 +520,17 @@ function commandImport(options) {
     const imported = JSON.parse(raw);
 
     // 支持两种格式：数组或带 metadata 的对象
-    const newVups = Array.isArray(imported) ? imported : (imported.data || []);
+    const newVups = Array.isArray(imported) ? imported : imported.data || [];
     if (!Array.isArray(newVups) || newVups.length === 0) {
         throw new Error('导入文件中没有有效的 VUP 数据');
     }
 
     const existing = loadVups();
-    const existingUids = new Set(existing.map(v => v.uid));
-    
+    const existingUids = new Set(existing.map((v) => v.uid));
+
     let added = 0;
     let skipped = 0;
-    
+
     for (const vup of newVups) {
         if (!vup.uid || existingUids.has(vup.uid)) {
             console.log(`  ⏭ 跳过 ${vup.name || vup.uid}（已存在或缺少 UID）`);
@@ -575,7 +591,7 @@ async function main() {
     }
 }
 
-main().catch(error => {
+main().catch((error) => {
     console.error(`错误: ${error.message}`);
     process.exit(1);
 });

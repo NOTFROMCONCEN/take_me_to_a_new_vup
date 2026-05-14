@@ -17,26 +17,51 @@ app.use((_, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; " +
+            "script-src 'self'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' https://i0.hdslb.com https://i1.hdslb.com https://i2.hdslb.com data:; " +
+            "connect-src 'self'; " +
+            "font-src 'self'; " +
+            "frame-ancestors 'none'; " +
+            "base-uri 'self'; " +
+            "form-action 'self';"
+    );
     next();
 });
 
 if (serveDist) {
     // dist 模式：静态资源加长期缓存（构建产物文件名不变时可安全缓存）
-    app.use(express.static(webRoot, {
-        maxAge: '1h',
-        immutable: false
-    }));
+    app.use(
+        express.static(webRoot, {
+            maxAge: '1h',
+            immutable: false
+        })
+    );
 } else {
     // 开发模式：禁用缓存，方便调试
-    app.use(express.static(webRoot, {
-        maxAge: 0,
-        etag: false
-    }));
-    app.use('/face_img', express.static(path.join(__dirname, 'face_img'), {
-        maxAge: '1d'
-    }));
+    app.use(
+        express.static(webRoot, {
+            maxAge: 0,
+            etag: false
+        })
+    );
+    app.use(
+        '/face_img',
+        express.static(path.join(__dirname, 'face_img'), {
+            maxAge: '1d'
+        })
+    );
     app.get('/vup.json', (_req, res) => {
         res.sendFile(path.join(__dirname, 'data', 'vup.json'));
+    });
+    app.get('/manifest.json', (_req, res) => {
+        res.sendFile(path.join(__dirname, 'src', 'manifest.json'));
+    });
+    app.get('/icon.svg', (_req, res) => {
+        res.sendFile(path.join(__dirname, 'src', 'icon.svg'));
     });
 }
 

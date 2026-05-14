@@ -1,4 +1,6 @@
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -141,21 +143,24 @@ body.modal-open {
     gap: 10px;
     min-height: 44px;
     padding: 0 16px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.72);
-    color: rgba(229,231,235,0.92);
+    color: rgba(229, 231, 235, 0.92);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
     cursor: pointer;
-    transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    transition:
+        transform 0.16s ease,
+        background 0.16s ease,
+        border-color 0.16s ease;
 }
 
 .topbar-btn:hover {
     transform: translateY(-1px);
     background: rgba(17, 24, 39, 0.84);
-    border-color: rgba(255,255,255,0.14);
+    border-color: rgba(255, 255, 255, 0.14);
 }
 
 .clock-chip {
@@ -163,28 +168,34 @@ body.modal-open {
     padding: 11px 16px;
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.72);
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: #e5e7eb;
     font-size: 0.92rem;
     font-weight: 600;
     text-align: center;
     letter-spacing: 0.06em;
     font-variant-numeric: tabular-nums;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
 }
 
 @keyframes drift-1 {
-    to { transform: translate(200px, 220px) scale(1.3); }
+    to {
+        transform: translate(200px, 220px) scale(1.3);
+    }
 }
 
 @keyframes drift-2 {
-    to { transform: translate(-180px, -160px) scale(1.2); }
+    to {
+        transform: translate(-180px, -160px) scale(1.2);
+    }
 }
 
 @keyframes drift-3 {
-    to { transform: translate(calc(-50% + 140px), calc(-50% - 100px)) scale(0.75); }
+    to {
+        transform: translate(calc(-50% + 140px), calc(-50% - 100px)) scale(0.75);
+    }
 }
 
 /* ── Card (two-column) ── */
@@ -199,24 +210,32 @@ body.modal-open {
     padding: 36px;
     border-radius: 24px;
     background: rgba(15, 23, 42, 0.82);
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
-    box-shadow: 0 18px 48px rgba(0,0,0,0.28);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     will-change: transform, opacity;
     animation: card-enter 0.4s ease-out forwards;
 }
 
 @keyframes card-enter {
-    from { opacity: 0; transform: translateY(30px) scale(0.95); }
-    to   { opacity: 1; transform: translateY(0)   scale(1); }
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* ── Card switch animations (performance optimized) ── */
 .card-exit {
     opacity: 0;
     transform: translateY(15px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
 }
 
 .card-enter {
@@ -224,8 +243,14 @@ body.modal-open {
 }
 
 @keyframes card-switch-in {
-    from { opacity: 0; transform: translateY(15px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ── Left column ── */
@@ -242,7 +267,7 @@ body.modal-open {
 .divider {
     width: 1px;
     align-self: stretch;
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.08);
     flex-shrink: 0;
 }
 
@@ -276,7 +301,7 @@ body.modal-open {
 
 .ring-track {
     fill: none;
-    stroke: rgba(255,255,255,0.08);
+    stroke: rgba(255, 255, 255, 0.08);
     stroke-width: 3;
 }
 
@@ -298,12 +323,12 @@ body.modal-open {
     height: calc(100% - 20px);
     border-radius: 50%;
     object-fit: cover;
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
 #avatar:not([src]),
-#avatar[src=""] {
+#avatar[src=''] {
     visibility: hidden;
 }
 
@@ -326,7 +351,7 @@ body.modal-open {
 
 .countdown-label {
     font-size: 0.78em;
-    color: rgba(229,231,235,0.54);
+    color: rgba(229, 231, 235, 0.54);
     letter-spacing: 0.03em;
     white-space: nowrap;
 }
@@ -340,16 +365,19 @@ body.modal-open {
     height: 28px;
     border: none;
     border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-    color: rgba(229,231,235,0.6);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(229, 231, 235, 0.6);
     cursor: pointer;
-    transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+    transition:
+        background 0.16s ease,
+        color 0.16s ease,
+        transform 0.16s ease;
     flex-shrink: 0;
 }
 
 .pause-btn:hover {
-    background: rgba(255,255,255,0.14);
-    color: rgba(229,231,235,0.9);
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(229, 231, 235, 0.9);
     transform: scale(1.08);
 }
 
@@ -380,15 +408,17 @@ body.modal-open {
     padding: 10px 20px;
     border-radius: 10px;
     background: rgba(15, 23, 42, 0.92);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #e5e7eb;
     font-size: 0.88em;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.24);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
     opacity: 0;
     transform: translateY(12px);
-    transition: opacity 0.25s ease, transform 0.25s ease;
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
     pointer-events: auto;
     white-space: nowrap;
 }
@@ -421,7 +451,7 @@ body.modal-open {
 
 /* ── Intro ── */
 .vup-intro {
-    color: rgba(229,231,235,0.68);
+    color: rgba(229, 231, 235, 0.68);
     font-size: 0.92em;
     line-height: 1.8;
     display: -webkit-box;
@@ -456,7 +486,11 @@ body.modal-open {
     text-decoration: none;
     cursor: pointer;
     border: none;
-    transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    transition:
+        transform 0.16s ease,
+        box-shadow 0.16s ease,
+        background 0.16s ease,
+        border-color 0.16s ease;
     /* 触摸优化 */
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -477,7 +511,7 @@ body.modal-open {
         transform: none;
         background: var(--accent-primary);
     }
-    
+
     .topbar-btn:hover,
     .topbar-icon-btn:hover,
     .tag-btn:hover,
@@ -499,13 +533,13 @@ body.modal-open {
 
 .btn-ghost {
     background: transparent;
-    color: rgba(229,231,235,0.82);
-    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(229, 231, 235, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-ghost:hover {
-    background: rgba(255,255,255,0.04);
-    border-color: rgba(255,255,255,0.16);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.16);
     transform: translateY(-1px);
 }
 
@@ -536,7 +570,9 @@ body.modal-open {
     opacity: 0;
     visibility: hidden;
     will-change: opacity;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
+    transition:
+        opacity 0.2s ease,
+        visibility 0.2s ease;
 }
 
 .all-vup-overlay.is-open {
@@ -550,8 +586,8 @@ body.modal-open {
     padding: 24px;
     border-radius: 22px;
     background: rgba(15, 23, 42, 0.96);
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 20px 56px rgba(0,0,0,0.28);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 56px rgba(0, 0, 0, 0.28);
     overflow: hidden;
     will-change: transform;
 }
@@ -573,18 +609,21 @@ body.modal-open {
 .panel-close {
     width: 42px;
     height: 42px;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 999px;
     background: transparent;
-    color: rgba(229,231,235,0.86);
+    color: rgba(229, 231, 235, 0.86);
     cursor: pointer;
-    transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    transition:
+        transform 0.16s ease,
+        background 0.16s ease,
+        border-color 0.16s ease;
 }
 
 .panel-close:hover {
     transform: scale(1.02);
-    background: rgba(255,255,255,0.04);
-    border-color: rgba(255,255,255,0.16);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.16);
 }
 
 .vup-grid {
@@ -605,17 +644,20 @@ body.modal-open {
     gap: 10px;
     padding: 14px;
     border-radius: 16px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     text-decoration: none;
     color: inherit;
-    transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    transition:
+        transform 0.16s ease,
+        background 0.16s ease,
+        border-color 0.16s ease;
 }
 
 .vup-grid-item:hover {
     transform: translateY(-2px);
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,255,255,0.14);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.14);
 }
 
 .vup-grid-avatar {
@@ -623,7 +665,7 @@ body.modal-open {
     height: 72px;
     border-radius: 50%;
     object-fit: cover;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .vup-grid-name {
@@ -633,7 +675,7 @@ body.modal-open {
 }
 
 .vup-grid-intro {
-    color: rgba(229,231,235,0.56);
+    color: rgba(229, 231, 235, 0.56);
     font-size: 0.82rem;
     line-height: 1.6;
     display: -webkit-box;
@@ -860,7 +902,9 @@ body.modal-open {
 
 /* ── Reduced motion: 尊重用户系统偏好 ── */
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
@@ -890,7 +934,8 @@ body.modal-open {
 }
 
 /* ── 主题变量 ── */
-:root, [data-theme="dark"] {
+:root,
+[data-theme='dark'] {
     --bg-primary: #0f172a;
     --bg-secondary: #111827;
     --bg-card: rgba(15, 23, 42, 0.82);
@@ -909,7 +954,7 @@ body.modal-open {
     --orb-3: rgba(148, 163, 184, 0.09);
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
     --bg-primary: #f8fafc;
     --bg-secondary: #f1f5f9;
     --bg-card: rgba(255, 255, 255, 0.85);
@@ -1013,7 +1058,7 @@ body {
     background: rgba(2, 6, 23, 0.62);
 }
 
-[data-theme="light"] .all-vup-overlay {
+[data-theme='light'] .all-vup-overlay {
     background: rgba(0, 0, 0, 0.3);
 }
 
@@ -1042,7 +1087,7 @@ body {
     border-color: var(--border-color);
 }
 
-[data-theme="light"] .vup-grid-item {
+[data-theme='light'] .vup-grid-item {
     background: rgba(0, 0, 0, 0.02);
 }
 
@@ -1051,7 +1096,7 @@ body {
     border-color: var(--border-hover);
 }
 
-[data-theme="light"] .vup-grid-item:hover {
+[data-theme='light'] .vup-grid-item:hover {
     background: rgba(0, 0, 0, 0.04);
 }
 
@@ -1079,7 +1124,10 @@ body {
     color: var(--text-primary);
     font-size: 1.1rem;
     cursor: pointer;
-    transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    transition:
+        transform 0.16s ease,
+        background 0.16s ease,
+        border-color 0.16s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1105,7 +1153,9 @@ body {
     color: var(--text-primary);
     font-size: 0.95rem;
     outline: none;
-    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    transition:
+        border-color 0.16s ease,
+        box-shadow 0.16s ease;
 }
 
 .vup-search::placeholder {
@@ -1157,5 +1207,7 @@ body {
 
 /* ── 卡片切换动画 ── */
 .card {
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
 }

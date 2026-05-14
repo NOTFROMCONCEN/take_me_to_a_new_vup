@@ -40,17 +40,17 @@ npm run vup -- update-all
 
 ## 目录结构
 
-| 路径 | 说明 |
-|------|------|
-| `server.js` | Express 本地开发/预览服务器 |
-| `build.js` | 静态构建脚本，输出 `dist/` |
-| `src/index.html` | 页面结构 |
-| `src/script.js` | 前端逻辑：获取 vup.json、随机选择、倒计时、跳转 |
-| `src/style.css` | 页面样式 |
-| `data/vup.json` | VUP 数据源，脚本会更新此文件 |
-| `face_img/` | 本地缓存头像，由脚本下载 |
-| `scripts/fetch-bilibili.js` | B 站数据预取脚本 |
-| `scripts/vup-manager.js` | VUP 数据管理脚本（增删改查） |
+| 路径                        | 说明                                            |
+| --------------------------- | ----------------------------------------------- |
+| `server.js`                 | Express 本地开发/预览服务器                     |
+| `build.js`                  | 静态构建脚本，输出 `dist/`                      |
+| `src/index.html`            | 页面结构                                        |
+| `src/script.js`             | 前端逻辑：获取 vup.json、随机选择、倒计时、跳转 |
+| `src/style.css`             | 页面样式                                        |
+| `data/vup.json`             | VUP 数据源，脚本会更新此文件                    |
+| `face_img/`                 | 本地缓存头像，由脚本下载                        |
+| `scripts/fetch-bilibili.js` | B 站数据预取脚本                                |
+| `scripts/vup-manager.js`    | VUP 数据管理脚本（增删改查）                    |
 
 ## 前端逻辑
 

@@ -12,17 +12,29 @@
         "prefetch:force": "node scripts/fetch-bilibili.js --force",
         "optimize-images": "node scripts/optimize-images.js",
         "validate": "node scripts/vup-manager.js validate",
+        "validate:schema": "node scripts/validate-schema.js",
         "export-data": "node scripts/vup-manager.js export",
         "import-data": "node scripts/vup-manager.js import",
         "build": "node build.js",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
         "deploy": "npm run prefetch && npm run optimize-images && npm run build"
     },
     "dependencies": {
         "express": "^4.19.2"
     },
     "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "ajv": "^8.20.0",
+        "csso": "^5.0.5",
+        "eslint": "^10.3.0",
+        "eslint-config-prettier": "^10.1.8",
         "nodemon": "^3.1.0",
-        "sharp": "^0.33.0"
+        "prettier": "^3.8.3",
+        "sharp": "^0.33.0",
+        "terser": "^5.47.1"
     },
     "author": "Huameitang",
     "license": "MIT"

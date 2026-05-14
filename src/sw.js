@@ -1,7 +1,7 @@
 /**
  * Service Worker
  * 缓存静态资源和 VUP 数据，支持离线访问
- * 
+ *
  * 策略：
  *   - 静态资源（HTML/CSS/JS）：Stale-While-Revalidate
  *   - 数据文件（vup.json）：Network First，失败回退缓存
@@ -12,12 +12,7 @@ const CACHE_NAME = 'vup-random-v2';
 const DATA_CACHE = 'vup-data-v1';
 const IMG_CACHE = 'vup-img-v1';
 
-const STATIC_ASSETS = [
-    '/',
-    '/index.html',
-    '/style.css',
-    '/script.js'
-];
+const STATIC_ASSETS = ['/', '/index.html', '/style.css', '/script.js'];
 
 const DATA_ASSETS = ['/vup.json'];
 
@@ -48,14 +43,14 @@ self.addEventListener('activate', (event) => {
 // 拦截请求
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-    
+
     // 跳过跨域请求
     if (url.origin !== self.location.origin) {
         return;
     }
 
     // 数据文件：Network First
-    if (DATA_ASSETS.some(asset => url.pathname.endsWith(asset))) {
+    if (DATA_ASSETS.some((asset) => url.pathname.endsWith(asset))) {
         event.respondWith(networkFirst(event.request, DATA_CACHE));
         return;
     }
@@ -76,12 +71,14 @@ self.addEventListener('fetch', (event) => {
 function staleWhileRevalidate(request, cacheName) {
     return caches.open(cacheName).then((cache) => {
         return cache.match(request).then((cached) => {
-            const fetchPromise = fetch(request).then((response) => {
-                if (response.status === 200) {
-                    cache.put(request, response.clone());
-                }
-                return response;
-            }).catch(() => cached);
+            const fetchPromise = fetch(request)
+                .then((response) => {
+                    if (response.status === 200) {
+                        cache.put(request, response.clone());
+                    }
+                    return response;
+                })
+                .catch(() => cached);
 
             return cached || fetchPromise;
         });
@@ -92,17 +89,19 @@ function staleWhileRevalidate(request, cacheName) {
  * Network First：优先网络，失败回退缓存
  */
 function networkFirst(request, cacheName) {
-    return fetch(request).then((response) => {
-        if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(cacheName).then((cache) => {
-                cache.put(request, responseClone);
-            });
-        }
-        return response;
-    }).catch(() => {
-        return caches.match(request);
-    });
+    return fetch(request)
+        .then((response) => {
+            if (response.status === 200) {
+                const responseClone = response.clone();
+                caches.open(cacheName).then((cache) => {
+                    cache.put(request, responseClone);
+                });
+            }
+            return response;
+        })
+        .catch(() => {
+            return caches.match(request);
+        });
 }
 
 /**
@@ -111,7 +110,9 @@ function networkFirst(request, cacheName) {
 function cacheFirst(request, cacheName) {
     return caches.open(cacheName).then((cache) => {
         return cache.match(request).then((cached) => {
-            if (cached) return cached;
+            if (cached) {
+                return cached;
+            }
             return fetch(request).then((response) => {
                 if (response.status === 200) {
                     const responseClone = response.clone();

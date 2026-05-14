@@ -9,8 +9,10 @@
 (function () {
     'use strict';
 
-    // ── 国际化 ──
-    const i18n = {
+    // ═══════════════════════════════════════════════════════════
+    // 模块：国际化 (i18n)
+    // ═══════════════════════════════════════════════════════════
+    const I18N = {
         'zh-CN': {
             title: '带我去一个VUP主页',
             loading: '加载中…',
@@ -26,9 +28,17 @@
             noIntro: '这个 VUP 暂时还没有填写简介。',
             clickToVisit: '点击前往主页',
             themeLight: '浅色',
-            themeDark: '深色'
+            themeDark: '深色',
+            toastPaused: '倒计时已暂停',
+            toastResumed: '倒计时已恢复',
+            toastCopied: '链接已复制到剪贴板',
+            toastShareSuccess: '分享成功',
+            toastCopyFailed: '复制失败，请手动复制',
+            toastNoShare: '暂无可分享的 VUP',
+            announcePaused: '倒计时已暂停',
+            announceResumed: '倒计时已恢复'
         },
-        'en': {
+        en: {
             title: 'Take me to a VUP page',
             loading: 'Loading…',
             loadFailed: 'Failed to load',
@@ -43,735 +53,898 @@
             noIntro: 'This VUP has not written a bio yet.',
             clickToVisit: 'Visit profile',
             themeLight: 'Light',
-            themeDark: 'Dark'
+            themeDark: 'Dark',
+            toastPaused: 'Countdown paused',
+            toastResumed: 'Countdown resumed',
+            toastCopied: 'Link copied to clipboard',
+            toastShareSuccess: 'Shared successfully',
+            toastCopyFailed: 'Copy failed, please copy manually',
+            toastNoShare: 'No VUP to share',
+            announcePaused: 'Countdown paused',
+            announceResumed: 'Countdown resumed'
         }
     };
 
     function getLang() {
         const stored = localStorage.getItem('lang');
-        if (stored) return stored;
+        if (stored) {
+            return stored;
+        }
         const nav = navigator.language || 'zh-CN';
         return nav.startsWith('zh') ? 'zh-CN' : 'en';
     }
 
     function t(key) {
-        return (i18n[getLang()] || i18n['zh-CN'])[key] || key;
+        return (I18N[getLang()] || I18N['zh-CN'])[key] || key;
     }
 
-    // ── 常量 ──
+    // ═══════════════════════════════════════════════════════════
+    // 模块：DOM 工具
+    // ═══════════════════════════════════════════════════════════
+    const DOM = {
+        $: (id) => document.getElementById(id),
+        announce: (msg) => {
+            const el = document.getElementById('a11y-announcer');
+            if (!el) {
+                return;
+            }
+            el.textContent = '';
+            setTimeout(() => {
+                el.textContent = msg;
+            }, 100);
+        },
+        setFocus: (el) => {
+            if (el) {
+                el.focus({ preventScroll: false });
+            }
+        },
+        showToast: (message, type = 'info', duration = 2500) => {
+            const container = document.getElementById('toast-container');
+            if (!container) {
+                return;
+            }
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('is-visible'));
+            setTimeout(() => {
+                toast.classList.remove('is-visible');
+                setTimeout(() => toast.parentNode?.removeChild(toast), 300);
+            }, duration);
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 模块：主题
+    // ═══════════════════════════════════════════════════════════
+    const Theme = {
+        get: () => {
+            const stored = localStorage.getItem('theme');
+            if (stored) {
+                return stored;
+            }
+            return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        },
+        apply: (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            const btn = document.getElementById('theme-toggle');
+            if (btn) {
+                btn.textContent = theme === 'light' ? '🌙' : '☀️';
+                btn.setAttribute('aria-label', theme === 'light' ? t('themeDark') : t('themeLight'));
+            }
+        },
+        toggle: () => {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', next);
+            Theme.apply(next);
+            DOM.announce(next === 'light' ? '已切换到浅色主题' : '已切换到深色主题');
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 模块：语言
+    // ═══════════════════════════════════════════════════════════
+    const Lang = {
+        apply: () => {
+            const lang = getLang();
+            const btn = document.getElementById('lang-toggle');
+            if (btn) {
+                btn.textContent = lang === 'zh-CN' ? 'EN' : '中';
+                btn.setAttribute('aria-label', lang === 'zh-CN' ? '切换到英语' : '切换到中文');
+            }
+            document.title = t('title');
+            const nameEl = document.getElementById('name');
+            if (nameEl && (nameEl.textContent === '加载中…' || nameEl.textContent === 'Loading…')) {
+                nameEl.textContent = t('loading');
+            }
+            ['jump-label', 'change-label', 'show-all-label', 'countdown-label', 'panel-title'].forEach((id) => {
+                const el = document.getElementById(id);
+                const keyMap = {
+                    'jump-label': 'jumpNow',
+                    'change-label': 'changeOne',
+                    'show-all-label': 'showAll',
+                    'countdown-label': 'secondsLeft',
+                    'panel-title': 'allVupTitle'
+                };
+                if (el) {
+                    el.textContent = t(keyMap[id]);
+                }
+            });
+            const searchInput = document.getElementById('vup-search');
+            if (searchInput) {
+                searchInput.placeholder = t('searchPlaceholder');
+            }
+            if (window.__allVupsCache?.length > 0) {
+                VupGrid.renderTagFilter();
+                VupGrid.render(window.__allVupsCache);
+            }
+        },
+        toggle: () => {
+            const current = getLang();
+            const next = current === 'zh-CN' ? 'en' : 'zh-CN';
+            localStorage.setItem('lang', next);
+            Lang.apply();
+            DOM.announce(next === 'zh-CN' ? '已切换到中文' : 'Switched to English');
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 模块：头像路径
+    // ═══════════════════════════════════════════════════════════
+    const Avatar = {
+        path: (vup, size = 'card') => {
+            const uid = vup.uid || '';
+            if (!uid) {
+                return '';
+            }
+            const suffix = size === 'thumb' ? '@72w' : size === 'card' ? '@140w' : '';
+            return `/face_img/${uid}${suffix}.webp`;
+        },
+        fallback: (vup) => {
+            const uid = vup.uid || '';
+            return uid ? `/face_img/${uid}.jpg` : '';
+        },
+        setupErrorHandler: (imgEl, vup) => {
+            let errorCount = 0;
+            const avatarFallback = Avatar.fallback(vup);
+            imgEl.onerror = () => {
+                errorCount++;
+                if (errorCount === 1 && avatarFallback) {
+                    imgEl.src = avatarFallback;
+                } else if (errorCount === 2 && vup.avatar && imgEl.src !== vup.avatar) {
+                    imgEl.src = vup.avatar.replace(/^http:\/\//, 'https://');
+                } else {
+                    imgEl.onerror = null;
+                }
+            };
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 模块：倒计时
+    // ═══════════════════════════════════════════════════════════
     const COUNTDOWN_SECONDS = 10;
     const CIRCUMFERENCE = 2 * Math.PI * 54;
 
-    // ── DOM 元素 ──
-    const avatarElement = document.getElementById('avatar');
-    const nameElement = document.getElementById('name');
-    const introElement = document.getElementById('intro');
-    const countdownElement = document.getElementById('countdown');
-    const jumpButton = document.getElementById('jump-button');
-    const changeButton = document.getElementById('change-button');
-    const ringEl = document.getElementById('countdown-ring');
-    const showAllButton = document.getElementById('show-all-btn');
-    const overlayElement = document.getElementById('all-vup-overlay');
-    const panelCloseButton = document.getElementById('panel-close-btn');
-    const vupGridElement = document.getElementById('vup-grid');
-    const clockChipElement = document.getElementById('clock-chip');
-    const searchInputElement = document.getElementById('vup-search');
-    const tagFilterElement = document.getElementById('tag-filter');
-    const themeToggleButton = document.getElementById('theme-toggle');
-    const langToggleButton = document.getElementById('lang-toggle');
-    const jumpButtonLabel = document.getElementById('jump-label');
-    const changeButtonLabel = document.getElementById('change-label');
-    const showAllLabel = document.getElementById('show-all-label');
-    const countdownLabel = document.getElementById('countdown-label');
-    const panelTitleElement = document.getElementById('panel-title');
-    const a11yAnnouncer = document.getElementById('a11y-announcer');
-    const pauseButton = document.getElementById('pause-btn');
-    const toastContainer = document.getElementById('toast-container');
+    const Countdown = {
+        _timerId: null,
+        _value: COUNTDOWN_SECONDS,
+        _targetUrl: '#',
+        _pausedAt: null,
+        _isPaused: false,
 
-    let countdown = COUNTDOWN_SECONDS;
-    let timerId = null;
-    let currentVupUrl = '#';
-    let allVupsCache = [];
-    let countdownTargetUrl = '#';
-    let countdownPausedAt = null;
-    let activeTag = '全部';
-    let isCountdownPaused = false;
+        get isRunning() {
+            return this._timerId !== null;
+        },
 
-    // ── 无障碍：屏幕阅读器公告 ──
-    function announce(message) {
-        if (!a11yAnnouncer) return;
-        a11yAnnouncer.textContent = '';
-        // 强制重绘以触发公告
-        setTimeout(() => {
-            a11yAnnouncer.textContent = message;
-        }, 100);
-    }
-
-    // ── 无障碍：管理焦点 ──
-    function setFocus(element) {
-        if (!element) return;
-        element.focus({ preventScroll: false });
-    }
-
-    // ── Toast 通知 ──
-    function showToast(message, type = 'info', duration = 2500) {
-        if (!toastContainer) return;
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        toastContainer.appendChild(toast);
-        
-        // 触发动画
-        requestAnimationFrame(() => {
-            toast.classList.add('is-visible');
-        });
-        
-        // 自动消失
-        setTimeout(() => {
-            toast.classList.remove('is-visible');
-            setTimeout(() => {
-                if (toast.parentNode) toast.parentNode.removeChild(toast);
-            }, 300);
-        }, duration);
-    }
-
-    // ── 主题 ──
-    function getPreferredTheme() {
-        const stored = localStorage.getItem('theme');
-        if (stored) return stored;
-        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    }
-
-    function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        if (themeToggleButton) {
-            themeToggleButton.textContent = theme === 'light' ? '🌙' : '☀️';
-            themeToggleButton.setAttribute('aria-label', theme === 'light' ? t('themeDark') : t('themeLight'));
-        }
-    }
-
-    function toggleTheme() {
-        const current = document.documentElement.getAttribute('data-theme') || 'dark';
-        const next = current === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('theme', next);
-        applyTheme(next);
-        // 无障碍：公告主题变更
-        announce(next === 'light' ? '已切换到浅色主题' : '已切换到深色主题');
-    }
-
-    // ── 语言 ──
-    function applyLang() {
-        const lang = getLang();
-        if (langToggleButton) {
-            langToggleButton.textContent = lang === 'zh-CN' ? 'EN' : '中';
-            langToggleButton.setAttribute('aria-label', lang === 'zh-CN' ? '切换到英语' : '切换到中文');
-        }
-        document.title = t('title');
-        if (nameElement.textContent === '加载中…' || nameElement.textContent === 'Loading…') {
-            nameElement.textContent = t('loading');
-        }
-        if (jumpButtonLabel) jumpButtonLabel.textContent = t('jumpNow');
-        if (changeButtonLabel) changeButtonLabel.textContent = t('changeOne');
-        if (showAllLabel) showAllLabel.textContent = t('showAll');
-        if (countdownLabel) countdownLabel.textContent = t('secondsLeft');
-        if (panelTitleElement) panelTitleElement.textContent = t('allVupTitle');
-        if (searchInputElement) searchInputElement.placeholder = t('searchPlaceholder');
-        // 重新渲染网格以更新翻译
-        if (allVupsCache.length > 0) {
-            renderTagFilter();
-            renderVupGrid(allVupsCache);
-        }
-    }
-
-    function toggleLang() {
-        const current = getLang();
-        const next = current === 'zh-CN' ? 'en' : 'zh-CN';
-        localStorage.setItem('lang', next);
-        applyLang();
-        // 无障碍：公告语言变更
-        announce(next === 'zh-CN' ? '已切换到中文' : 'Switched to English');
-    }
-
-    // ── 头像路径（基于 UID，支持 WebP 和多尺寸） ──
-    function localAvatarPath(vup, size = 'card') {
-        const uid = vup.uid || '';
-        if (!uid) return '';
-        // 优先使用 WebP，回退到 JPG
-        const suffix = size === 'thumb' ? '@72w' : (size === 'card' ? '@140w' : '');
-        return `/face_img/${uid}${suffix}.webp`;
-    }
-
-    function localAvatarFallback(vup) {
-        const uid = vup.uid || '';
-        return uid ? `/face_img/${uid}.jpg` : '';
-    }
-
-    // ── 数据加载 ──
-    async function loadVup() {
-        try {
-            const response = await fetch('/vup.json');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+        start: (url) => {
+            Countdown.stop();
+            Countdown._targetUrl = url;
+            Countdown._value = COUNTDOWN_SECONDS;
+            Countdown._isPaused = false;
+            Countdown._pausedAt = null;
+            Countdown._updateUI(false);
+            const ring = document.getElementById('countdown-ring');
+            if (ring) {
+                ring.style.strokeDashoffset = 0;
             }
-            const allVups = await response.json();
-
-            if (!Array.isArray(allVups) || allVups.length === 0) {
-                throw new Error('VUP 数据为空或格式不正确');
+            const num = document.getElementById('countdown');
+            if (num) {
+                num.textContent = Countdown._value;
             }
 
-            // 用 localStorage 记录上次展示的 VUP，避免连续重复。
-            const lastVupName = localStorage.getItem('lastVupName');
-            let available = allVups;
-            if (lastVupName) {
-                const filtered = allVups.filter(v => v.name !== lastVupName);
-                if (filtered.length > 0) available = filtered;
+            Countdown._timerId = setInterval(() => {
+                Countdown._value--;
+                const n = document.getElementById('countdown');
+                if (n) {
+                    n.textContent = Countdown._value;
+                }
+                const r = document.getElementById('countdown-ring');
+                if (r) {
+                    r.style.strokeDashoffset =
+                        (CIRCUMFERENCE * (COUNTDOWN_SECONDS - Countdown._value)) / COUNTDOWN_SECONDS;
+                }
+                if (Countdown._value <= 0) {
+                    Countdown.stop();
+                    window.location.href = Countdown._targetUrl;
+                }
+            }, 1000);
+        },
+
+        stop: () => {
+            if (Countdown._timerId) {
+                clearInterval(Countdown._timerId);
+                Countdown._timerId = null;
             }
-            const selectedVup = available[Math.floor(Math.random() * available.length)];
-            localStorage.setItem('lastVupName', selectedVup.name);
-            allVupsCache = allVups;
+        },
 
-            updateVupInfo(selectedVup);
-            renderTagFilter();
-            renderVupGrid(allVups);
-            startCountdown(selectedVup.url);
-        } catch (error) {
-            console.error('获取VUP数据失败:', error);
-            nameElement.textContent = t('loadFailed');
-            introElement.textContent = t('loadFailedDesc');
-            countdownElement.textContent = '--';
-            showToast(t('loadFailed'), 'error', 4000);
-        }
-    }
+        pause: () => {
+            if (Countdown._timerId) {
+                clearInterval(Countdown._timerId);
+                Countdown._timerId = null;
+                Countdown._pausedAt = Countdown._value;
+            }
+        },
 
-    function updateVupInfo(vup) {
-        const avatarPath = localAvatarPath(vup, 'card');
-        const avatarFallback = localAvatarFallback(vup);
+        resume: () => {
+            if (Countdown._pausedAt !== null && Countdown._pausedAt > 0) {
+                Countdown._value = Countdown._pausedAt;
+                Countdown._pausedAt = null;
+                Countdown.start(Countdown._targetUrl);
+            }
+        },
 
-        avatarElement.alt = `${vup.name}的头像`;
-        // 使用 picture 元素的 srcset 逻辑（通过 data 属性）
-        avatarElement.dataset.src = avatarPath;
-        avatarElement.dataset.fallback = avatarFallback;
-        avatarElement.src = avatarPath;
-        
-        let errorCount = 0;
-        avatarElement.onerror = () => {
-            errorCount++;
-            if (errorCount === 1 && avatarFallback) {
-                // WebP 失败，尝试本地 JPG
-                avatarElement.src = avatarFallback;
-            } else if (errorCount === 2 && vup.avatar && avatarElement.src !== vup.avatar) {
-                // 本地 JPG 失败，尝试 B 站 CDN
-                avatarElement.src = vup.avatar.replace(/^http:\/\//, 'https://');
+        toggle: () => {
+            if (Countdown._isPaused) {
+                Countdown._isPaused = false;
+                Countdown.resume();
+                Countdown._updateUI(false);
+                DOM.showToast(t('toastResumed'), 'info', 1500);
+                DOM.announce(t('announceResumed'));
             } else {
-                avatarElement.onerror = null;
+                Countdown._isPaused = true;
+                Countdown.pause();
+                Countdown._updateUI(true);
+                DOM.showToast(t('toastPaused'), 'info', 1500);
+                DOM.announce(t('announcePaused'));
             }
-        };
-        nameElement.textContent = vup.name;
-        introElement.textContent = vup.intro || t('noIntro');
-        jumpButton.href = vup.url;
-        currentVupUrl = vup.url;
-        
-        // 无障碍：公告 VUP 变更
-        announce(`已选择 ${vup.name}`);
-    }
+        },
 
-    // ── "换一个"不刷新页面 ──
-    function pickAnother() {
-        if (allVupsCache.length === 0) return;
+        _updateUI: (paused) => {
+            const btn = document.getElementById('pause-btn');
+            if (!btn) {
+                return;
+            }
+            btn.classList.toggle('is-paused', paused);
+            const label = paused ? '恢复倒计时' : '暂停倒计时';
+            btn.setAttribute('aria-label', label);
+            btn.setAttribute('title', label);
+            btn.innerHTML = paused
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>';
+        }
+    };
 
-        const lastVupName = nameElement.textContent;
-        let available = allVupsCache.filter(v => v.name !== lastVupName);
-        if (available.length === 0) available = allVupsCache;
-
-        const selectedVup = available[Math.floor(Math.random() * available.length)];
-        localStorage.setItem('lastVupName', selectedVup.name);
-
-        // 卡片切换动画 - 使用 CSS 类优化性能
-        const card = document.querySelector('.card');
-        card.classList.add('card-exit');
-        
-        // 使用 requestAnimationFrame 确保动画流畅
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                updateVupInfo(selectedVup);
-                startCountdown(selectedVup.url);
-                card.classList.remove('card-exit');
-                card.classList.add('card-enter');
-                
-                // 动画结束后移除类
-                setTimeout(() => {
-                    card.classList.remove('card-enter');
-                    // 无障碍：将焦点移到卡片，便于键盘用户
-                    setFocus(card);
-                }, 300);
-            }, 200);
-        });
-    }
-
-    // ── 标签筛选 ──
-    function getAllTags(vups) {
-        const tagSet = new Set();
-        for (const vup of vups) {
-            if (Array.isArray(vup.tags)) {
-                for (const tag of vup.tags) {
-                    tagSet.add(tag);
-                }
+    // ═══════════════════════════════════════════════════════════
+    // 模块：时钟
+    // ═══════════════════════════════════════════════════════════
+    const Clock = {
+        start: () => {
+            Clock.update();
+            window.setInterval(Clock.update, 1000);
+        },
+        update: () => {
+            const el = document.getElementById('clock-chip');
+            if (el) {
+                el.textContent = new Date().toLocaleTimeString('zh-CN', {
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
             }
         }
-        return Array.from(tagSet).sort();
-    }
+    };
 
-    function renderTagFilter() {
-        if (!tagFilterElement) return;
-        const tags = getAllTags(allVupsCache);
-        tagFilterElement.innerHTML = '';
-        
-        // 设置标签容器的 ARIA 属性
-        tagFilterElement.setAttribute('role', 'group');
-        tagFilterElement.setAttribute('aria-label', '按标签筛选 VUP');
+    // ═══════════════════════════════════════════════════════════
+    // 模块：VUP 网格（展示全部弹窗）
+    // ═══════════════════════════════════════════════════════════
+    const VupGrid = {
+        _activeTag: '全部',
+        _focusBeforeOpen: null,
 
-        // 使用 DocumentFragment 减少 DOM 操作次数
-        const fragment = document.createDocumentFragment();
+        getTags: (vups) => {
+            const set = new Set();
+            for (const v of vups) {
+                if (Array.isArray(v.tags)) {
+                    v.tags.forEach((tag) => set.add(tag));
+                }
+            }
+            return Array.from(set).sort();
+        },
 
-        const allBtn = document.createElement('button');
-        allBtn.className = 'tag-btn active';
-        allBtn.textContent = t('allTags');
-        allBtn.setAttribute('aria-pressed', 'true');
-        allBtn.addEventListener('click', () => {
-            activeTag = '全部';
-            renderVupGrid(allVupsCache);
-            updateTagButtons();
-            announce(`已显示全部 ${allVupsCache.length} 个 VUP`);
-        });
-        fragment.appendChild(allBtn);
+        renderTagFilter: () => {
+            const container = document.getElementById('tag-filter');
+            if (!container) {
+                return;
+            }
+            const tags = VupGrid.getTags(window.__allVupsCache || []);
+            container.innerHTML = '';
+            container.setAttribute('role', 'group');
+            container.setAttribute('aria-label', '按标签筛选 VUP');
 
-        for (const tag of tags) {
-            const btn = document.createElement('button');
-            btn.className = 'tag-btn';
-            btn.textContent = tag;
-            btn.setAttribute('aria-pressed', 'false');
-            btn.addEventListener('click', () => {
-                activeTag = tag;
-                const filtered = allVupsCache.filter(v =>
-                    Array.isArray(v.tags) && v.tags.includes(tag)
+            const fragment = document.createDocumentFragment();
+            const allBtn = document.createElement('button');
+            allBtn.className = 'tag-btn active';
+            allBtn.textContent = t('allTags');
+            allBtn.setAttribute('aria-pressed', 'true');
+            allBtn.addEventListener('click', () => {
+                VupGrid._activeTag = '全部';
+                VupGrid.render(window.__allVupsCache);
+                VupGrid._updateButtons();
+                DOM.announce(`已显示全部 ${window.__allVupsCache.length} 个 VUP`);
+            });
+            fragment.appendChild(allBtn);
+
+            for (const tag of tags) {
+                const btn = document.createElement('button');
+                btn.className = 'tag-btn';
+                btn.textContent = tag;
+                btn.setAttribute('aria-pressed', 'false');
+                btn.addEventListener('click', () => {
+                    VupGrid._activeTag = tag;
+                    const filtered = window.__allVupsCache.filter((v) => Array.isArray(v.tags) && v.tags.includes(tag));
+                    VupGrid.render(filtered);
+                    VupGrid._updateButtons();
+                    DOM.announce(`已筛选标签"${tag}"，共 ${filtered.length} 个 VUP`);
+                });
+                fragment.appendChild(btn);
+            }
+            container.appendChild(fragment);
+        },
+
+        _updateButtons: () => {
+            const container = document.getElementById('tag-filter');
+            if (!container) {
+                return;
+            }
+            container.querySelectorAll('.tag-btn').forEach((btn, idx) => {
+                const isActive = (VupGrid._activeTag === '全部' && idx === 0) || btn.textContent === VupGrid._activeTag;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+        },
+
+        render: (vups) => {
+            const grid = document.getElementById('vup-grid');
+            if (!grid) {
+                return;
+            }
+            grid.innerHTML = '';
+            grid.setAttribute('role', 'list');
+            grid.setAttribute('aria-label', `VUP 列表，共 ${vups.length} 个`);
+
+            if (vups.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'vup-grid-empty';
+                empty.textContent = '—';
+                empty.setAttribute('role', 'status');
+                empty.setAttribute('aria-live', 'polite');
+                grid.appendChild(empty);
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            for (const vup of vups) {
+                const card = document.createElement('a');
+                card.className = 'vup-grid-item';
+                card.href = vup.url;
+                card.target = '_blank';
+                card.rel = 'noreferrer noopener';
+                card.setAttribute('role', 'listitem');
+                card.setAttribute('aria-label', `${vup.name}，${vup.intro || t('clickToVisit')}`);
+
+                const img = document.createElement('img');
+                img.className = 'vup-grid-avatar';
+                img.src = Avatar.path(vup, 'thumb');
+                img.alt = `${vup.name} 的头像`;
+                img.loading = 'lazy';
+                Avatar.setupErrorHandler(img, vup);
+
+                const title = document.createElement('span');
+                title.className = 'vup-grid-name';
+                title.textContent = vup.name;
+                title.setAttribute('aria-hidden', 'true');
+
+                const intro = document.createElement('span');
+                intro.className = 'vup-grid-intro';
+                intro.textContent = vup.intro || t('clickToVisit');
+                intro.setAttribute('aria-hidden', 'true');
+
+                card.append(img, title, intro);
+                fragment.appendChild(card);
+            }
+            grid.append(fragment);
+        },
+
+        open: () => {
+            Countdown.pause();
+            VupGrid._focusBeforeOpen = document.activeElement;
+            const overlay = document.getElementById('all-vup-overlay');
+            if (overlay) {
+                overlay.classList.add('is-open');
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+            document.body.classList.add('modal-open');
+            const searchInput = document.getElementById('vup-search');
+            DOM.setFocus(searchInput || document.getElementById('panel-close-btn'));
+            DOM.announce('已打开全部 VUP 列表');
+        },
+
+        close: () => {
+            const overlay = document.getElementById('all-vup-overlay');
+            if (overlay) {
+                overlay.classList.remove('is-open');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+            document.body.classList.remove('modal-open');
+            if (VupGrid._focusBeforeOpen) {
+                DOM.setFocus(VupGrid._focusBeforeOpen);
+                VupGrid._focusBeforeOpen = null;
+            }
+            DOM.announce('已关闭列表');
+            Countdown.resume();
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 模块：搜索索引（倒排索引，支撑大规模搜索）
+    // ═══════════════════════════════════════════════════════════
+    const SearchIndex = {
+        _index: new Map(),
+
+        tokenize: (text) => {
+            if (!text) {
+                return [];
+            }
+            // 按非字母数字中文字符分割
+            const tokens = text
+                .toLowerCase()
+                .split(/[^a-z0-9\u4e00-\u9fff]+/)
+                .filter((t) => t.length > 0);
+            // 额外提取连续中文子串（支持前缀匹配）
+            const chineseTokens = text.match(/[\u4e00-\u9fff]{1,}/g) || [];
+            return [...new Set([...tokens, ...chineseTokens])];
+        },
+
+        build: (vups) => {
+            SearchIndex._index.clear();
+            for (let i = 0; i < vups.length; i++) {
+                const vup = vups[i];
+                const text = `${vup.name} ${vup.intro || ''}`;
+                const tokens = SearchIndex.tokenize(text);
+                for (const token of tokens) {
+                    if (!SearchIndex._index.has(token)) {
+                        SearchIndex._index.set(token, new Set());
+                    }
+                    SearchIndex._index.get(token).add(i);
+                }
+            }
+            return SearchIndex._index.size;
+        },
+
+        search: (query) => {
+            const q = query.trim().toLowerCase();
+            if (!q) {
+                return null;
+            } // null 表示无搜索词，返回全部
+
+            // 精确词匹配
+            if (SearchIndex._index.has(q)) {
+                return Array.from(SearchIndex._index.get(q));
+            }
+
+            // 前缀匹配
+            const results = new Set();
+            for (const [token, indices] of SearchIndex._index) {
+                if (token.startsWith(q) || q.startsWith(token)) {
+                    for (const idx of indices) {
+                        results.add(idx);
+                    }
+                }
+            }
+
+            // 子串回退
+            if (results.size === 0) {
+                for (const [token, indices] of SearchIndex._index) {
+                    if (token.includes(q) || q.includes(token)) {
+                        for (const idx of indices) {
+                            results.add(idx);
+                        }
+                    }
+                }
+            }
+
+            return results.size > 0 ? Array.from(results) : [];
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 模块：搜索
+    // ═══════════════════════════════════════════════════════════
+    const Search = {
+        _debounceTimer: null,
+
+        getFiltered: () => {
+            const input = document.getElementById('vup-search');
+            const query = (input ? input.value : '').trim();
+            let vups = window.__allVupsCache || [];
+            if (VupGrid._activeTag !== '全部') {
+                vups = vups.filter((v) => Array.isArray(v.tags) && v.tags.includes(VupGrid._activeTag));
+            }
+            if (query) {
+                const indices = SearchIndex.search(query);
+                if (indices !== null) {
+                    vups = indices.map((i) => window.__allVupsCache[i]).filter(Boolean);
+                }
+            }
+            return vups;
+        },
+
+        onInput: () => {
+            clearTimeout(Search._debounceTimer);
+            Search._debounceTimer = setTimeout(() => {
+                const filtered = Search.getFiltered();
+                VupGrid.render(filtered);
+                const input = document.getElementById('vup-search');
+                const query = input ? input.value.trim() : '';
+                DOM.announce(
+                    query ? `找到 ${filtered.length} 个匹配"${query}"的结果` : `显示 ${filtered.length} 个 VUP`
                 );
-                renderVupGrid(filtered);
-                updateTagButtons();
-                announce(`已筛选标签"${tag}"，共 ${filtered.length} 个 VUP`);
-            });
-            fragment.appendChild(btn);
+            }, 300);
+        },
+
+        onEnter: () => {
+            clearTimeout(Search._debounceTimer);
+            const filtered = Search.getFiltered();
+            VupGrid.render(filtered);
+            const input = document.getElementById('vup-search');
+            const query = input ? input.value.trim() : '';
+            DOM.announce(query ? `找到 ${filtered.length} 个结果` : `显示 ${filtered.length} 个 VUP`);
         }
+    };
 
-        // 一次性添加所有元素到 DOM
-        tagFilterElement.appendChild(fragment);
-    }
+    // ═══════════════════════════════════════════════════════════
+    // 模块：分享
+    // ═══════════════════════════════════════════════════════════
+    const Share = {
+        currentVupUrl: '#',
 
-    function updateTagButtons() {
-        if (!tagFilterElement) return;
-        const buttons = tagFilterElement.querySelectorAll('.tag-btn');
-        buttons.forEach(btn => {
-            const isActive = (activeTag === '全部' && btn === tagFilterElement.firstElementChild) ||
-                btn.textContent === activeTag;
-            btn.classList.toggle('active', isActive);
-            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
-    }
-
-    // ── 搜索 ──
-    let searchDebounceTimer = null;
-    
-    function getFilteredVups() {
-        const query = (searchInputElement ? searchInputElement.value : '').trim().toLowerCase();
-        let vups = allVupsCache;
-
-        if (activeTag !== '全部') {
-            vups = vups.filter(v => Array.isArray(v.tags) && v.tags.includes(activeTag));
-        }
-
-        if (query) {
-            vups = vups.filter(v =>
-                v.name.toLowerCase().includes(query) ||
-                (v.intro || '').toLowerCase().includes(query)
-            );
-        }
-
-        return vups;
-    }
-
-    // ── VUP 网格渲染（性能优化：使用 DocumentFragment） ──
-    function renderVupGrid(vups) {
-        vupGridElement.innerHTML = '';
-        
-        // 设置网格的 ARIA 属性
-        vupGridElement.setAttribute('role', 'list');
-        vupGridElement.setAttribute('aria-label', `VUP 列表，共 ${vups.length} 个`);
-
-        if (vups.length === 0) {
-            const empty = document.createElement('div');
-            empty.className = 'vup-grid-empty';
-            empty.textContent = '—';
-            empty.setAttribute('role', 'status');
-            empty.setAttribute('aria-live', 'polite');
-            vupGridElement.appendChild(empty);
-            return;
-        }
-
-        // 使用 DocumentFragment 减少 DOM 操作次数
-        const fragment = document.createDocumentFragment();
-
-        for (const vup of vups) {
-            const card = document.createElement('a');
-            card.className = 'vup-grid-item';
-            card.href = vup.url;
-            card.target = '_blank';
-            card.rel = 'noreferrer noopener';
-            card.setAttribute('role', 'listitem');
-            card.setAttribute('aria-label', `${vup.name}，${vup.intro || t('clickToVisit')}`);
-
-            const image = document.createElement('img');
-            image.className = 'vup-grid-avatar';
-            const avatarPath = localAvatarPath(vup, 'thumb');
-            const avatarFallback = localAvatarFallback(vup);
-            image.src = avatarPath;
-            image.alt = `${vup.name} 的头像`;
-            image.loading = 'lazy';
-            image.dataset.fallback = avatarFallback;
-            let errorCount = 0;
-            image.onerror = () => {
-                errorCount++;
-                if (errorCount === 1 && avatarFallback) {
-                    image.src = avatarFallback;
-                } else if (errorCount === 2 && vup.avatar && image.src !== vup.avatar) {
-                    image.src = vup.avatar.replace(/^http:\/\//, 'https://');
-                } else {
-                    image.onerror = null;
-                }
-            };
-
-            const title = document.createElement('span');
-            title.className = 'vup-grid-name';
-            title.textContent = vup.name;
-            title.setAttribute('aria-hidden', 'true');
-
-            const intro = document.createElement('span');
-            intro.className = 'vup-grid-intro';
-            intro.textContent = vup.intro || t('clickToVisit');
-            intro.setAttribute('aria-hidden', 'true');
-
-            card.append(image, title, intro);
-            fragment.append(card);
-        }
-
-        // 一次性添加所有元素到 DOM
-        vupGridElement.append(fragment);
-    }
-
-    // ── 弹窗 ──
-    let focusBeforeOpen = null;
-
-    function openAllVups() {
-        pauseCountdown();
-        // 保存当前焦点，关闭时恢复
-        focusBeforeOpen = document.activeElement;
-        overlayElement.classList.add('is-open');
-        overlayElement.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-        // 将焦点移到搜索框或关闭按钮
-        if (searchInputElement) {
-            setFocus(searchInputElement);
-        } else {
-            setFocus(panelCloseButton);
-        }
-        // 无障碍：公告弹窗打开
-        announce('已打开全部 VUP 列表');
-    }
-
-    function closeAllVups() {
-        overlayElement.classList.remove('is-open');
-        overlayElement.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-        // 恢复之前的焦点
-        if (focusBeforeOpen) {
-            setFocus(focusBeforeOpen);
-            focusBeforeOpen = null;
-        }
-        // 无障碍：公告弹窗关闭
-        announce('已关闭列表');
-        resumeCountdown();
-        showAllButton.focus();
-    }
-
-    // ── 时钟 ──
-    function updateClock() {
-        const now = new Date();
-        clockChipElement.textContent = now.toLocaleTimeString('zh-CN', {
-            hour12: false,
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-    }
-
-    // ── 倒计时 ──
-    function togglePause() {
-        if (isCountdownPaused) {
-            // 恢复
-            isCountdownPaused = false;
-            resumeCountdown();
-            updatePauseButton(false);
-            showToast('倒计时已恢复', 'info', 1500);
-            announce('倒计时已恢复');
-        } else {
-            // 暂停
-            isCountdownPaused = true;
-            pauseCountdown();
-            updatePauseButton(true);
-            showToast('倒计时已暂停', 'info', 1500);
-            announce('倒计时已暂停');
-        }
-    }
-
-    function updatePauseButton(paused) {
-        if (!pauseButton) return;
-        pauseButton.classList.toggle('is-paused', paused);
-        pauseButton.setAttribute('aria-label', paused ? '恢复倒计时' : '暂停倒计时');
-        pauseButton.setAttribute('title', paused ? '恢复倒计时' : '暂停倒计时');
-        // 切换图标：暂停 ▶ / 播放 ⏸
-        pauseButton.innerHTML = paused
-            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
-            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>';
-    }
-
-    function pauseCountdown() {
-        if (timerId !== null) {
-            clearInterval(timerId);
-            timerId = null;
-            countdownPausedAt = countdown;
-        }
-    }
-
-    function resumeCountdown() {
-        if (countdownPausedAt !== null && countdownPausedAt > 0) {
-            countdown = countdownPausedAt;
-            countdownPausedAt = null;
-            startCountdown(countdownTargetUrl);
-        }
-    }
-
-    function startCountdown(url) {
-        clearInterval(timerId);
-        countdownTargetUrl = url;
-        countdown = COUNTDOWN_SECONDS;
-        isCountdownPaused = false;
-        countdownPausedAt = null;
-        updatePauseButton(false);
-        ringEl.style.strokeDashoffset = 0;
-        countdownElement.textContent = countdown;
-        timerId = setInterval(() => {
-            countdown--;
-            countdownElement.textContent = countdown;
-            ringEl.style.strokeDashoffset = CIRCUMFERENCE * (COUNTDOWN_SECONDS - countdown) / COUNTDOWN_SECONDS;
-            if (countdown <= 0) {
-                clearInterval(timerId);
-                timerId = null;
-                countdownPausedAt = null;
-                window.location.href = url;
+        share: () => {
+            const nameEl = document.getElementById('name');
+            const vupName = nameEl ? nameEl.textContent : '';
+            if (!vupName || vupName === t('loading') || vupName === t('loadFailed')) {
+                DOM.showToast(t('toastNoShare'), 'info', 1500);
+                return;
             }
-        }, 1000);
-    }
-
-    // ── 页面可见性 ──
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            pauseCountdown();
-        } else {
-            if (!overlayElement.classList.contains('is-open')) {
-                resumeCountdown();
+            const text = `${vupName} 的 Bilibili 主页：${Share.currentVupUrl}`;
+            if (navigator.share) {
+                navigator
+                    .share({ title: `${vupName} - Bilibili`, text, url: Share.currentVupUrl })
+                    .then(() => DOM.showToast(t('toastShareSuccess'), 'success', 1500))
+                    .catch(() => {});
+            } else if (navigator.clipboard?.writeText) {
+                navigator.clipboard
+                    .writeText(text)
+                    .then(() => DOM.showToast(`已复制 ${vupName} 的链接`, 'success', 2000))
+                    .catch(() => Share._fallback(text));
+            } else {
+                Share._fallback(text);
             }
+        },
+
+        _fallback: (text) => {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                DOM.showToast(t('toastCopied'), 'success', 2000);
+            } catch {
+                DOM.showToast(t('toastCopyFailed'), 'error', 2000);
+            }
+            document.body.removeChild(ta);
         }
-    });
+    };
 
-    // ── 初始化 ──
-    applyTheme(getPreferredTheme());
-    loadVup();
-    updateClock();
-    window.setInterval(updateClock, 1000);
+    // ═══════════════════════════════════════════════════════════
+    // 模块：主 VUP 卡片
+    // ═══════════════════════════════════════════════════════════
+    const Card = {
+        currentUrl: '#',
+        lastVupName: localStorage.getItem('lastVupName') || '',
 
-    // ── 事件绑定 ──
-    changeButton.addEventListener('click', (event) => {
-        event.preventDefault();
-        pickAnother();
-    });
+        update: (vup) => {
+            const avatarEl = document.getElementById('avatar');
+            const nameEl = document.getElementById('name');
+            const introEl = document.getElementById('intro');
+            const jumpBtn = document.getElementById('jump-button');
 
-    if (pauseButton) {
-        pauseButton.addEventListener('click', togglePause);
-    }
+            if (avatarEl) {
+                avatarEl.alt = `${vup.name}的头像`;
+                avatarEl.src = Avatar.path(vup, 'card');
+                Avatar.setupErrorHandler(avatarEl, vup);
+            }
+            if (nameEl) {
+                nameEl.textContent = vup.name;
+            }
+            if (introEl) {
+                introEl.textContent = vup.intro || t('noIntro');
+            }
+            if (jumpBtn) {
+                jumpBtn.href = vup.url;
+            }
 
-    const shareButton = document.getElementById('share-button');
-    if (shareButton) {
-        shareButton.addEventListener('click', shareCurrentVup);
-    }
+            Card.currentUrl = vup.url;
+            Share.currentVupUrl = vup.url;
+            DOM.announce(`已选择 ${vup.name}`);
+        },
 
-    showAllButton.addEventListener('click', () => {
-        if (allVupsCache.length === 0) return;
-        openAllVups();
-    });
+        pickAnother: () => {
+            const cache = window.__allVupsCache;
+            if (!cache || cache.length === 0) {
+                return;
+            }
+            const nameEl = document.getElementById('name');
+            const lastName = nameEl ? nameEl.textContent : '';
+            let available = cache.filter((v) => v.name !== lastName);
+            if (available.length === 0) {
+                available = cache;
+            }
+            const selected = available[Math.floor(Math.random() * available.length)];
+            localStorage.setItem('lastVupName', selected.name);
 
-    panelCloseButton.addEventListener('click', closeAllVups);
-
-    overlayElement.addEventListener('click', (event) => {
-        if (event.target === overlayElement) {
-            closeAllVups();
-        }
-    });
-
-    // ── 键盘快捷键 ──
-    document.addEventListener('keydown', (event) => {
-        // 如果在搜索框中，不处理快捷键（除了 Escape）
-        const isSearchFocused = document.activeElement === searchInputElement;
-        
-        if (event.key === 'Escape') {
-            closeAllVups();
-            return;
-        }
-        
-        // 在搜索框中不处理其他快捷键
-        if (isSearchFocused) return;
-        
-        // 不在输入框中时才处理快捷键
-        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
-        
-        switch (event.key.toLowerCase()) {
-            case ' ':
-            case 'n':
-                // 空格/N：换一个
-                event.preventDefault();
-                pickAnother();
-                break;
-            case 'p':
-                // P：暂停/恢复
-                event.preventDefault();
-                togglePause();
-                break;
-            case 'l':
-                // L：展示所有 VUP
-                event.preventDefault();
-                if (allVupsCache.length > 0) openAllVups();
-                break;
-            case 's':
-                // S：分享当前 VUP
-                event.preventDefault();
-                shareCurrentVup();
-                break;
-            case 'enter':
-                // Enter：立即跳转
-                if (currentVupUrl && currentVupUrl !== '#') {
-                    window.location.href = currentVupUrl;
-                }
-                break;
-        }
-    });
-
-    // ── 分享功能 ──
-    function shareCurrentVup() {
-        const vupName = nameElement.textContent;
-        const vupUrl = currentVupUrl;
-        
-        if (!vupName || vupName === t('loading') || vupName === t('loadFailed')) {
-            showToast('暂无可分享的 VUP', 'info', 1500);
-            return;
-        }
-        
-        const shareText = `${vupName} 的 Bilibili 主页：${vupUrl}`;
-        
-        // 优先使用 Web Share API（移动端）
-        if (navigator.share) {
-            navigator.share({
-                title: `${vupName} - Bilibili`,
-                text: shareText,
-                url: vupUrl
-            }).then(() => {
-                showToast('分享成功', 'success', 1500);
-            }).catch(() => {
-                // 用户取消分享，不做处理
-            });
-        } else {
-            // 回退到复制到剪贴板
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(shareText).then(() => {
-                    showToast(`已复制 ${vupName} 的链接`, 'success', 2000);
-                }).catch(() => {
-                    fallbackCopy(shareText);
+            const card = document.querySelector('.card');
+            if (card) {
+                card.classList.add('card-exit');
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        Card.update(selected);
+                        Countdown.start(selected.url);
+                        card.classList.remove('card-exit');
+                        card.classList.add('card-enter');
+                        setTimeout(() => {
+                            card.classList.remove('card-enter');
+                            DOM.setFocus(card);
+                        }, 300);
+                    }, 200);
                 });
             } else {
-                fallbackCopy(shareText);
+                Card.update(selected);
+                Countdown.start(selected.url);
             }
-        }
-    }
+        },
 
-    function fallbackCopy(text) {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.left = '-9999px';
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-            document.execCommand('copy');
-            showToast('链接已复制到剪贴板', 'success', 2000);
-        } catch (e) {
-            showToast('复制失败，请手动复制', 'error', 2000);
-        }
-        document.body.removeChild(textarea);
-    }
-
-    jumpButton.addEventListener('click', (event) => {
-        if (!currentVupUrl || currentVupUrl === '#') {
-            event.preventDefault();
-        }
-    });
-
-    if (searchInputElement) {
-        searchInputElement.addEventListener('input', () => {
-            // 防抖处理，避免频繁更新
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(() => {
-                const filtered = getFilteredVups();
-                renderVupGrid(filtered);
-                // 无障碍：公告搜索结果
-                const query = searchInputElement.value.trim();
-                if (query) {
-                    announce(`找到 ${filtered.length} 个匹配"${query}"的结果`);
-                } else {
-                    announce(`显示 ${filtered.length} 个 VUP`);
+        load: async () => {
+            try {
+                const res = await fetch('/vup.json');
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
                 }
-            }, 300);
-        });
-        
-        // 支持键盘 Enter 键触发搜索
-        searchInputElement.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                clearTimeout(searchDebounceTimer);
-                const filtered = getFilteredVups();
-                renderVupGrid(filtered);
-                const query = searchInputElement.value.trim();
-                announce(query ? `找到 ${filtered.length} 个结果` : `显示 ${filtered.length} 个 VUP`);
+                const allVups = await res.json();
+                if (!Array.isArray(allVups) || allVups.length === 0) {
+                    throw new Error('VUP 数据为空或格式不正确');
+                }
+
+                const lastName = localStorage.getItem('lastVupName');
+                let available = allVups;
+                if (lastName) {
+                    const filtered = allVups.filter((v) => v.name !== lastName);
+                    if (filtered.length > 0) {
+                        available = filtered;
+                    }
+                }
+                const selected = available[Math.floor(Math.random() * available.length)];
+                localStorage.setItem('lastVupName', selected.name);
+                window.__allVupsCache = allVups;
+
+                // 使用 requestIdleCallback 在空闲时建立搜索索引
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(() => SearchIndex.build(allVups), { timeout: 2000 });
+                } else {
+                    setTimeout(() => SearchIndex.build(allVups), 100);
+                }
+
+                Card.update(selected);
+                VupGrid.renderTagFilter();
+                VupGrid.render(allVups);
+                Countdown.start(selected.url);
+            } catch (err) {
+                console.error('获取VUP数据失败:', err);
+                const nameEl = document.getElementById('name');
+                const introEl = document.getElementById('intro');
+                const countdownEl = document.getElementById('countdown');
+                if (nameEl) {
+                    nameEl.textContent = t('loadFailed');
+                }
+                if (introEl) {
+                    introEl.textContent = t('loadFailedDesc');
+                }
+                if (countdownEl) {
+                    countdownEl.textContent = '--';
+                }
+                DOM.showToast(t('loadFailed'), 'error', 4000);
             }
-        });
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 模块：键盘快捷键
+    // ═══════════════════════════════════════════════════════════
+    const Shortcuts = {
+        init: () => {
+            document.addEventListener('keydown', (e) => {
+                const searchInput = document.getElementById('vup-search');
+                const isSearchFocused = document.activeElement === searchInput;
+
+                if (e.key === 'Escape') {
+                    VupGrid.close();
+                    return;
+                }
+                if (isSearchFocused) {
+                    return;
+                }
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+
+                switch (e.key.toLowerCase()) {
+                    case ' ':
+                    case 'n':
+                        e.preventDefault();
+                        Card.pickAnother();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        Countdown.toggle();
+                        break;
+                    case 'l':
+                        e.preventDefault();
+                        if (window.__allVupsCache?.length > 0) {
+                            VupGrid.open();
+                        }
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        Share.share();
+                        break;
+                    case 'enter':
+                        if (Card.currentUrl && Card.currentUrl !== '#') {
+                            window.location.href = Card.currentUrl;
+                        }
+                        break;
+                }
+            });
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 模块：页面可见性
+    // ═══════════════════════════════════════════════════════════
+    const Visibility = {
+        init: () => {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    Countdown.pause();
+                } else {
+                    const overlay = document.getElementById('all-vup-overlay');
+                    if (!overlay?.classList.contains('is-open')) {
+                        Countdown.resume();
+                    }
+                }
+            });
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 模块：事件绑定
+    // ═══════════════════════════════════════════════════════════
+    const Events = {
+        init: () => {
+            const changeBtn = document.getElementById('change-button');
+            if (changeBtn) {
+                changeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    Card.pickAnother();
+                });
+            }
+
+            const pauseBtn = document.getElementById('pause-btn');
+            if (pauseBtn) {
+                pauseBtn.addEventListener('click', Countdown.toggle);
+            }
+
+            const shareBtn = document.getElementById('share-button');
+            if (shareBtn) {
+                shareBtn.addEventListener('click', Share.share);
+            }
+
+            const showAllBtn = document.getElementById('show-all-btn');
+            if (showAllBtn) {
+                showAllBtn.addEventListener('click', () => {
+                    if (window.__allVupsCache?.length > 0) {
+                        VupGrid.open();
+                    }
+                });
+            }
+
+            const closeBtn = document.getElementById('panel-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', VupGrid.close);
+            }
+
+            const overlay = document.getElementById('all-vup-overlay');
+            if (overlay) {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        VupGrid.close();
+                    }
+                });
+            }
+
+            const searchInput = document.getElementById('vup-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', Search.onInput);
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        Search.onEnter();
+                    }
+                });
+            }
+
+            const themeBtn = document.getElementById('theme-toggle');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', Theme.toggle);
+            }
+
+            const langBtn = document.getElementById('lang-toggle');
+            if (langBtn) {
+                langBtn.addEventListener('click', Lang.toggle);
+            }
+
+            const jumpBtn = document.getElementById('jump-button');
+            if (jumpBtn) {
+                jumpBtn.addEventListener('click', (e) => {
+                    if (!Card.currentUrl || Card.currentUrl === '#') {
+                        e.preventDefault();
+                    }
+                });
+            }
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // 初始化入口
+    // ═══════════════════════════════════════════════════════════
+    function init() {
+        Theme.apply(Theme.get());
+        Lang.apply();
+        Card.load();
+        Clock.start();
+        Events.init();
+        Shortcuts.init();
+        Visibility.init();
+
+        // Service Worker 注册
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
     }
 
-    if (themeToggleButton) {
-        themeToggleButton.addEventListener('click', toggleTheme);
-    }
-
-    if (langToggleButton) {
-        langToggleButton.addEventListener('click', toggleLang);
-    }
-
-    // ── Service Worker 注册 ──
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(() => {
-            // Service Worker 注册失败，不影响页面功能
-        });
-    }
+    init();
 })();

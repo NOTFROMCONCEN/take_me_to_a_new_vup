@@ -1,0 +1,50 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "VUP Data Schema",
+    "description": "VUP 列表数据校验规则",
+    "type": "array",
+    "minItems": 1,
+    "items": {
+        "type": "object",
+        "required": ["name", "uid", "url"],
+        "additionalProperties": false,
+        "properties": {
+            "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "description": "VUP 展示名称"
+            },
+            "uid": {
+                "type": "string",
+                "pattern": "^\\d+$",
+                "description": "Bilibili UID，纯数字字符串"
+            },
+            "url": {
+                "type": "string",
+                "pattern": "^https://(space\\.bilibili\\.com|www\\.acfun\\.cn/u)/\\d+$",
+                "description": "空间主页 URL（支持 Bilibili / AcFun）"
+            },
+            "avatar": {
+                "type": "string",
+                "pattern": "^https?://",
+                "description": "头像图片 URL"
+            },
+            "intro": {
+                "type": "string",
+                "maxLength": 500,
+                "description": "个人简介/签名"
+            },
+            "tags": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                },
+                "description": "标签列表"
+            }
+        }
+    }
+}
