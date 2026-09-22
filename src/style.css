@@ -567,6 +567,8 @@ body.modal-open {
     background: rgba(2, 6, 23, 0.62);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     opacity: 0;
     visibility: hidden;
     will-change: opacity;
@@ -582,17 +584,22 @@ body.modal-open {
 
 .all-vup-panel {
     width: min(1040px, 100%);
+    height: min(82vh, 920px);
     max-height: min(82vh, 920px);
+    min-height: 0;
     padding: 24px;
     border-radius: 22px;
     background: rgba(15, 23, 42, 0.96);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 20px 56px rgba(0, 0, 0, 0.28);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
     will-change: transform;
 }
 
 .panel-header {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -627,12 +634,15 @@ body.modal-open {
 }
 
 .vup-grid {
+    flex: 1 1 auto;
+    min-height: 0;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 16px;
-    max-height: calc(82vh - 108px);
+    max-height: none;
     overflow: auto;
     padding-right: 6px;
+    overscroll-behavior: contain;
     /* 性能优化：跳过视口外内容的渲染 */
     content-visibility: auto;
     contain-intrinsic-size: auto 500px;
@@ -806,10 +816,12 @@ body.modal-open {
     .all-vup-panel {
         padding: 16px;
         border-radius: 20px;
-        max-height: 88vh;
+        height: min(88vh, 920px);
+        max-height: calc(100vh - 24px);
     }
 
     .panel-header {
+        flex: 0 0 auto;
         margin-bottom: 14px;
         gap: 12px;
     }
@@ -824,6 +836,7 @@ body.modal-open {
     }
 
     .panel-toolbar {
+        flex: 0 0 auto;
         margin-bottom: 12px;
     }
 
@@ -833,6 +846,7 @@ body.modal-open {
     }
 
     .tag-filter {
+        flex: 0 0 auto;
         gap: 6px;
         margin-bottom: 12px;
     }
@@ -845,7 +859,6 @@ body.modal-open {
     .vup-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
-        max-height: calc(88vh - 140px);
     }
 
     .vup-grid-item {
