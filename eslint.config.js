@@ -62,6 +62,15 @@ module.exports = [
         }
     },
     {
-        ignores: ['dist/**', 'node_modules/**', '*.min.js', 'package-lock.json']
+        ignores: [
+            'dist/**',
+            'node_modules/**',
+            '*.min.js',
+            'package-lock.json',
+            // 工具产物 / 工作树，不参与 lint
+            '.kilo/**',
+            '.workbuddy/**',
+            '.edgeone/**'
+        ]
     }
 ];

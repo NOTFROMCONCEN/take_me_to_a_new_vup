@@ -49,6 +49,14 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // 导航请求（HTML）：Network First
+    // 产物文件名带哈希，发版后旧 HTML 会引用已被清理的旧 CSS/JS，
+    // 因此 HTML 必须网络优先，只把缓存当离线兜底
+    if (event.request.mode === 'navigate' || (event.request.headers.get('accept') || '').includes('text/html')) {
+        event.respondWith(networkFirst(event.request, CACHE_NAME));
+        return;
+    }
+
     // 数据文件：Network First
     if (DATA_ASSETS.some((asset) => url.pathname.endsWith(asset))) {
         event.respondWith(networkFirst(event.request, DATA_CACHE));

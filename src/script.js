@@ -155,6 +155,8 @@
                 btn.setAttribute('aria-label', lang === 'zh-CN' ? '切换到英语' : '切换到中文');
             }
             document.title = t('title');
+            // 同步 lang 属性，保证屏幕阅读器发音与语言一致
+            document.documentElement.lang = lang === 'zh-CN' ? 'zh-CN' : 'en';
             const nameEl = document.getElementById('name');
             if (nameEl && (nameEl.textContent === '加载中…' || nameEl.textContent === 'Loading…')) {
                 nameEl.textContent = t('loading');
@@ -246,31 +248,41 @@
             Countdown._isPaused = false;
             Countdown._pausedAt = null;
             Countdown._updateUI(false);
-            const ring = document.getElementById('countdown-ring');
-            if (ring) {
-                ring.style.strokeDashoffset = 0;
-            }
+            Countdown._syncRing();
             const num = document.getElementById('countdown');
             if (num) {
                 num.textContent = Countdown._value;
             }
+            Countdown._run();
+        },
 
-            Countdown._timerId = setInterval(() => {
-                Countdown._value--;
-                const n = document.getElementById('countdown');
-                if (n) {
-                    n.textContent = Countdown._value;
-                }
-                const r = document.getElementById('countdown-ring');
-                if (r) {
-                    r.style.strokeDashoffset =
-                        (CIRCUMFERENCE * (COUNTDOWN_SECONDS - Countdown._value)) / COUNTDOWN_SECONDS;
-                }
-                if (Countdown._value <= 0) {
-                    Countdown.stop();
-                    window.location.href = Countdown._targetUrl;
-                }
-            }, 1000);
+        // 只负责启动定时器，不重置剩余秒数（暂停恢复时复用）
+        _run: () => {
+            if (Countdown._timerId) {
+                return;
+            }
+            Countdown._timerId = setInterval(Countdown._tick, 1000);
+        },
+
+        _tick: () => {
+            Countdown._value--;
+            const num = document.getElementById('countdown');
+            if (num) {
+                num.textContent = Countdown._value;
+            }
+            Countdown._syncRing();
+            if (Countdown._value <= 0) {
+                Countdown.stop();
+                window.location.href = Countdown._targetUrl;
+            }
+        },
+
+        _syncRing: () => {
+            const ring = document.getElementById('countdown-ring');
+            if (ring) {
+                ring.style.strokeDashoffset =
+                    (CIRCUMFERENCE * (COUNTDOWN_SECONDS - Countdown._value)) / COUNTDOWN_SECONDS;
+            }
         },
 
         stop: () => {
@@ -288,12 +300,14 @@
             }
         },
 
+        // 从剩余秒数继续，而不是重新开始
         resume: () => {
-            if (Countdown._pausedAt !== null && Countdown._pausedAt > 0) {
-                Countdown._value = Countdown._pausedAt;
-                Countdown._pausedAt = null;
-                Countdown.start(Countdown._targetUrl);
+            if (Countdown._pausedAt === null || Countdown._pausedAt <= 0) {
+                return;
             }
+            Countdown._value = Countdown._pausedAt;
+            Countdown._pausedAt = null;
+            Countdown._run();
         },
 
         toggle: () => {
@@ -354,6 +368,8 @@
     const VupGrid = {
         _activeTag: '全部',
         _focusBeforeOpen: null,
+        // 打开弹窗前倒计时是否已被用户手动暂停，用于关闭时决定是否自动恢复
+        _wasCountdownPaused: false,
 
         getTags: (vups) => {
             const set = new Set();
@@ -470,6 +486,7 @@
         },
 
         open: () => {
+            VupGrid._wasCountdownPaused = Countdown._isPaused;
             Countdown.pause();
             VupGrid._focusBeforeOpen = document.activeElement;
             const overlay = document.getElementById('all-vup-overlay');
@@ -495,7 +512,11 @@
                 VupGrid._focusBeforeOpen = null;
             }
             DOM.announce('已关闭列表');
-            Countdown.resume();
+            // 只有用户没有手动暂停时，关闭弹窗才自动恢复倒计时
+            if (!VupGrid._wasCountdownPaused) {
+                Countdown.resume();
+            }
+            VupGrid._wasCountdownPaused = false;
         }
     };
 
@@ -517,6 +538,13 @@
             // 额外提取连续中文子串（支持前缀匹配）
             const chineseTokens = text.match(/[\u4e00-\u9fff]{1,}/g) || [];
             return [...new Set([...tokens, ...chineseTokens])];
+        },
+
+        // 索引尚未构建时（requestIdleCallback 未触发）按需补建，避免搜索结果为空
+        ensure: (vups) => {
+            if (SearchIndex._index.size === 0 && Array.isArray(vups) && vups.length > 0) {
+                SearchIndex.build(vups);
+            }
         },
 
         build: (vups) => {
@@ -580,17 +608,25 @@
         getFiltered: () => {
             const input = document.getElementById('vup-search');
             const query = (input ? input.value : '').trim();
-            let vups = window.__allVupsCache || [];
+            const all = window.__allVupsCache || [];
+            let indices = all.map((_, i) => i);
+
+            // 标签筛选
             if (VupGrid._activeTag !== '全部') {
-                vups = vups.filter((v) => Array.isArray(v.tags) && v.tags.includes(VupGrid._activeTag));
+                indices = indices.filter((i) => Array.isArray(all[i].tags) && all[i].tags.includes(VupGrid._activeTag));
             }
+
+            // 关键词筛选：与标签结果取交集，避免搜索结果覆盖标签筛选
             if (query) {
-                const indices = SearchIndex.search(query);
-                if (indices !== null) {
-                    vups = indices.map((i) => window.__allVupsCache[i]).filter(Boolean);
+                SearchIndex.ensure(all);
+                const matched = SearchIndex.search(query);
+                if (matched !== null) {
+                    const matchedSet = new Set(matched);
+                    indices = indices.filter((i) => matchedSet.has(i));
                 }
             }
-            return vups;
+
+            return indices.map((i) => all[i]).filter(Boolean);
         },
 
         onInput: () => {
@@ -796,7 +832,13 @@
                     VupGrid.close();
                     return;
                 }
+                // 搜索框内保持正常输入（空格等字符不应被快捷键拦截）
                 if (isSearchFocused) {
+                    return;
+                }
+                // 列表弹窗打开时禁用除 Esc 外的快捷键，避免误触切换/跳转
+                const overlay = document.getElementById('all-vup-overlay');
+                if (overlay?.classList.contains('is-open')) {
                     return;
                 }
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {

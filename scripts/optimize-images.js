@@ -3,10 +3,14 @@
  * 将 face_img/ 中的 JPG 图片转换为 WebP 和 AVIF 格式，并生成多种尺寸
  *
  * 用法：
- *   node scripts/optimize-images.js
+ *   node scripts/optimize-images.js            # 仅生成 WebP（默认，前端实际只用 WebP）
+ *   node scripts/optimize-images.js --avif     # 额外生成 AVIF（前端暂未使用，仅供未来 <picture> 升级）
  *
  * 依赖：
  *   npm install sharp --save-dev
+ *
+ * 产物输出到 face_img/（源目录），必须在 npm run build 之前执行；
+ * build 会把 face_img/ 中的 WebP 一起打进 dist/，并对已有 WebP 的头像跳过冗余 JPG。
  */
 
 const fs = require('fs');
@@ -24,7 +28,9 @@ try {
 
 const ROOT = path.join(__dirname, '..');
 const FACE_IMG = path.join(ROOT, 'face_img');
-const DIST_FACE_IMG = path.join(ROOT, 'dist', 'face_img');
+
+// 前端目前只使用 WebP，AVIF 默认关闭，避免产物体积与构建耗时浪费
+const ENABLE_AVIF = process.argv.includes('--avif');
 
 // 目标尺寸
 const SIZES = {
@@ -68,30 +74,32 @@ async function optimizeImage(inputPath, uid, outputDir) {
             kb: (webpStats.size / 1024).toFixed(1)
         });
 
-        // 生成 AVIF
-        const avifPath = path.join(outputDir, `${uid}${suffix}${FORMATS.avif.ext}`);
-        try {
-            await pipeline.avif({ quality: FORMATS.avif.quality, effort: 4 }).toFile(avifPath);
-            const avifStats = fs.statSync(avifPath);
-            results.push({
-                format: 'avif',
-                size: sizeName,
-                width: width || metadata.width,
-                path: avifPath,
-                bytes: avifStats.size,
-                kb: (avifStats.size / 1024).toFixed(1)
-            });
-        } catch (e) {
-            // AVIF 编码可能失败（如 sharp 版本不支持），仅记录警告
-            results.push({
-                format: 'avif',
-                size: sizeName,
-                width: width || metadata.width,
-                path: avifPath,
-                bytes: 0,
-                kb: '0.0',
-                error: e.message
-            });
+        // 生成 AVIF（可选）
+        if (ENABLE_AVIF) {
+            const avifPath = path.join(outputDir, `${uid}${suffix}${FORMATS.avif.ext}`);
+            try {
+                await pipeline.avif({ quality: FORMATS.avif.quality, effort: 4 }).toFile(avifPath);
+                const avifStats = fs.statSync(avifPath);
+                results.push({
+                    format: 'avif',
+                    size: sizeName,
+                    width: width || metadata.width,
+                    path: avifPath,
+                    bytes: avifStats.size,
+                    kb: (avifStats.size / 1024).toFixed(1)
+                });
+            } catch (e) {
+                // AVIF 编码可能失败（如 sharp 版本不支持），仅记录警告
+                results.push({
+                    format: 'avif',
+                    size: sizeName,
+                    width: width || metadata.width,
+                    path: avifPath,
+                    bytes: 0,
+                    kb: '0.0',
+                    error: e.message
+                });
+            }
         }
     }
 
@@ -103,9 +111,6 @@ async function main() {
         console.error('错误: face_img/ 目录不存在');
         process.exit(1);
     }
-
-    // 确保 dist/face_img 目录存在
-    fs.mkdirSync(DIST_FACE_IMG, { recursive: true });
 
     const files = fs.readdirSync(FACE_IMG);
     const jpgFiles = files.filter((f) => f.endsWith('.jpg') && /^\d+\.jpg$/.test(f));
@@ -131,7 +136,7 @@ async function main() {
         console.log(`处理 ${uid}...`);
 
         try {
-            const results = await optimizeImage(inputPath, uid, DIST_FACE_IMG);
+            const results = await optimizeImage(inputPath, uid, FACE_IMG);
 
             for (const result of results) {
                 const status = result.error ? `✘ (${result.error.slice(0, 30)}...)` : '✔';
@@ -163,8 +168,10 @@ async function main() {
     console.log(`WebP 总大小:  ${(totalWebpSize / 1024 / 1024).toFixed(2)} MB (节省 ${webpSavings}%)`);
     if (totalAvifSize > 0) {
         console.log(`AVIF 总大小:  ${(totalAvifSize / 1024 / 1024).toFixed(2)} MB (节省 ${avifSavings}%)`);
+    } else {
+        console.log('AVIF:         未生成（前端暂不使用，需要时加 --avif）');
     }
-    console.log(`\n优化后的图片保存在: dist/face_img/`);
+    console.log(`\n优化后的图片保存在: face_img/（构建时随 dist/ 一起打包）`);
 }
 
 main().catch((error) => {

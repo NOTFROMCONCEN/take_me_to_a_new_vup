@@ -12,6 +12,7 @@
 - `scripts/optimize-images.js` 负责将头像转换为 WebP 格式并生成多尺寸。
 - `build.js` 负责生成可直接部署到 EdgeOne 的 `dist/` 目录。
 - `server.js` 仅用于本地开发和预览，不参与线上运行。
+- `Agent.md` 是给 AI Agent 的项目约定（部署规则、构建顺序等），改动前请先阅读。
 
 ## 安装依赖
 
@@ -53,9 +54,18 @@ npm run prefetch:force
 npm run optimize-images
 ```
 
+需要额外生成 AVIF（前端暂未使用，仅供后续 `<picture>` 升级）：
+
+```bash
+node scripts/optimize-images.js --avif
+```
+
 **注意**：图片优化需要安装 `sharp` 库：`npm install sharp --save-dev`
 
-优化后的图片会自动在构建时使用，可减少 30-50% 的体积。
+优化后的图片写入 **`face_img/` 源目录**（而非 `dist/`），体积可减少约 67%（3.4 MB → 1.1 MB）。
+因为 `build` 会先清空 `dist/`，**必须先执行本脚本再执行 `build`**，否则产物里不会有 WebP。
+
+构建时，已生成 WebP 的头像会跳过冗余 JPG（前端加载链路本身还有 B 站 CDN 兜底），产物体积因此大幅下降。
 
 ### 交互式管理
 
@@ -117,37 +127,107 @@ npm run build
 npm run preview
 ```
 
-## 部署到 EdgeOne
+完整发布流水线（顺序固定，不可颠倒）：
 
-在 EdgeOne Pages 中可直接使用以下配置：
+```bash
+npm run deploy   # = prefetch → optimize-images → build
+```
+
+构建期约束：`src/index.html` 中的 `/style.css`、`/script.js` 引用会被替换为带哈希的文件名，若残留未哈希引用构建会直接失败；`src/sw.js` 会随产物一起部署并注入哈希资源清单。
+
+## 部署到 EdgeOne（直传模式）
+
+本项目采用 **直接从本地直传** 的方式部署到 EdgeOne Makers，不再依赖 Git 推送触发。
+部署目标固定为同一个项目 `take-me-to-a-vup`（Project ID `makers-dnnodfw5d5qd`），因此每次部署都会覆盖更新线上版本，访问域名保持不变。
+
+### 方式一：在 WorkBuddy 中让我直接部署（推荐）
+
+直接说一句「部署到 EdgeOne」即可。我会自动完成：构建 `dist/` → 通过 EdgeOne 连接器直传 → 返回线上访问地址。
+无需任何本地配置，也无需手动登录。
+
+### 方式二：本地命令行部署
+
+首次使用需先登录一次（浏览器授权，选中国站）：
+
+```bash
+npm run deploy:edgeone:login
+npm run deploy:edgeone:whoami   # 确认已登录
+```
+
+之后每次部署执行：
+
+```bash
+npm run deploy:edgeone
+```
+
+该命令等价于：
+
+```bash
+npm run optimize-images
+npm run build
+npx -y edgeone@latest makers deploy ./dist -n take-me-to-a-vup --json
+```
+
+部署到预览环境（不影响线上）：
+
+```bash
+npm run deploy:edgeone:preview
+```
+
+### CI / 无浏览器环境
+
+在 CI 中使用 API Token 部署（Token 具备账号级权限，切勿写入仓库）：
+
+```bash
+npx -y edgeone@latest makers deploy ./dist -n take-me-to-a-vup -t "$EDGEONE_API_TOKEN" --json
+```
+
+也可将 Token 存到本地 `.edgeone/.token`（已被 `.gitignore` 忽略），CLI 会自动读取。
+
+Token 获取位置：腾讯云 EdgeOne 控制台 → Pages → 设置 → API Token。
+
+### 说明
+
+- 项目为 **纯静态直传** 类型，`dist/` 即完整部署产物，无需服务端运行时（当前产物约 1.2 MB）。
+- `npm run deploy`（`prefetch` → `optimize-images` → `build`）仍为数据更新流水线，只负责生成产物，不负责上传。
+- `.github/workflows/deploy.yml` 是旧版的 Git 推送自动部署流程，改用直传后可按需停用（见文件内注释）。
+
+<!-- legacy-git-deploy -->
+
+在 EdgeOne Pages 中也可使用以下构建配置：
 
 - Build Command: `npm run build`
 - Output Directory: `dist`
-
-如果数据已经在仓库内准备好，也可以直接上传 `dist/` 目录作为纯静态站点。
 
 ## 项目结构
 
 ```text
 take_me_to_A_vup/
+├── Agent.md                  # Agent 行为约定（部署规则等），改代码前必读
 ├── build.js                  # 静态构建脚本
 ├── data/
-│   └── vup.json              # VUP 数据
+│   ├── vup.json              # VUP 数据
+│   └── vup.schema.json       # 数据校验 schema
 ├── dist/                     # 构建输出目录（gitignore）
-├── face_img/                 # 本地头像缓存
+├── face_img/                 # 本地头像缓存（JPG + 优化后的 WebP）
 ├── scripts/
 │   ├── fetch-bilibili.js     # B 站数据批量预取脚本
-│   ├── optimize-images.js    # 图片优化脚本（WebP 转换）
-│   └── vup-manager.js        # VUP 数据管理脚本（增删改查 + 验证 + 导入/导出）
+│   ├── optimize-images.js    # 图片优化脚本（WebP 转换，可选 AVIF）
+│   ├── vup-manager.js        # VUP 数据管理脚本（增删改查 + 验证 + 导入/导出）
+│   ├── validate-schema.js    # schema 校验脚本
+│   └── lib/                  # 脚本共用模块
 ├── src/
 │   ├── index.html            # 页面结构
 │   ├── script.js             # 前端交互逻辑
 │   ├── style.css             # 页面样式
-│   └── sw.js                 # Service Worker（离线缓存）
+│   ├── sw.js                 # Service Worker（离线缓存）
+│   ├── manifest.json         # PWA 清单
+│   └── icon.svg              # 站点图标
 ├── .github/
 │   ├── copilot-instructions.md
 │   └── workflows/
-│       ├── deploy.yml        # EdgeOne Pages 自动部署
+│       ├── ci.yml            # CI 检查
+│       ├── deploy.yml        # EdgeOne 部署（仅手动触发，已停用 push 触发）
 │       └── update-vup.yml    # 定时更新 VUP 数据
 ├── package.json
 └── server.js                 # 本地开发 / 预览服务器
@@ -194,7 +274,7 @@ take_me_to_A_vup/
 
 ### 离线支持
 
-- Service Worker 缓存静态资源
+- Service Worker 缓存静态资源（`sw.js` 由构建注入哈希资源清单，随 `dist/` 一起部署）
 - Stale-While-Revalidate 策略（静态资源）
 - Network First 策略（数据文件）
 - Cache First 策略（图片资源）

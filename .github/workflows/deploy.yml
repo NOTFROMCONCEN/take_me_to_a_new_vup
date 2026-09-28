@@ -1,9 +1,12 @@
 name: Deploy to EdgeOne Pages
 
+# 本仓库默认走「本地直传」部署（见 README「部署到 EdgeOne（直传模式）」）。
+# 此 workflow 已改为仅手动触发，push 到 main 不再自动部署，避免与本地直传形成双通道覆盖。
+# 如需回退到 CI 部署：在 Actions 页面手动 Run workflow，或恢复下面的 push 触发器。
 on:
-    push:
-        branches: [main]
     workflow_dispatch:
+    # push:
+    #     branches: [main]
 
 jobs:
     deploy:
@@ -25,6 +28,6 @@ jobs:
               run: npm run build
 
             - name: Deploy to EdgeOne Pages
-              run: npx edgeone pages deploy ./dist -n take-me-to-a-vup -t ${{ secrets.EDGEONE_API_TOKEN }}
+              run: npx -y edgeone@latest makers deploy ./dist -n take-me-to-a-vup -t "$EDGEONE_API_TOKEN" --json
               env:
                   EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}

@@ -2,3 +2,9 @@ dist/
 node_modules/
 *.min.js
 package-lock.json
+face_img/
+
+# 工具产物 / 工作树，不参与格式化与 CI 检查
+.kilo/
+.workbuddy/
+.edgeone/

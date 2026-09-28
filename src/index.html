@@ -5,7 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>带我去一个VUP主页</title>
         <meta name="description" content="随机将你带到一个 VUP 的 Bilibili 主页，发现新的虚拟主播！" />
-        <meta name="theme-color" content="#0f172a" />
+        <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon.svg" />
         <link rel="manifest" href="/manifest.json" />
@@ -84,7 +85,7 @@
                         <circle class="ring-track" cx="60" cy="60" r="54" />
                         <circle class="ring-fill" id="countdown-ring" cx="60" cy="60" r="54" />
                     </svg>
-                    <img id="avatar" src="" alt="" aria-live="polite" />
+                    <img id="avatar" alt="" width="140" height="140" decoding="async" aria-live="polite" />
                 </div>
                 <div class="countdown-display" aria-live="off">
                     <span id="countdown" class="countdown-num" aria-label="倒计时秒数">10</span>
@@ -190,6 +191,10 @@
 
         <!-- Toast 通知容器 -->
         <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+        <noscript>
+            <p class="noscript-tip">本页面需要启用 JavaScript 才能随机跳转到 VUP 主页。</p>
+        </noscript>
 
         <script src="/script.js" defer></script>
     </body>

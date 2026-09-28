@@ -332,6 +332,22 @@ body.modal-open {
     visibility: hidden;
 }
 
+/* ── 无 JavaScript 兜底提示 ── */
+.noscript-tip {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    z-index: 10000;
+    padding: 12px 18px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    border-radius: 12px;
+    background: var(--bg-card, rgba(15, 23, 42, 0.92));
+    color: var(--text-primary, #e5e7eb);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
 /* ── Countdown (under avatar) ── */
 .countdown-display {
     display: flex;

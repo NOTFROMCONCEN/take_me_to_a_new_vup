@@ -157,7 +157,11 @@ async function build() {
         '.topbar-btn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;border:1px solid rgba(255,255,255,.08);border-radius:999px;background:rgba(15,23,42,.72);color:rgba(229,231,235,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer;transition:transform .16s ease,background .16s ease,border-color .16s ease}',
         '.clock-chip{min-width:116px;padding:11px 16px;border-radius:999px;background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.08);color:#e5e7eb;font-size:.92rem;font-weight:600;text-align:center;letter-spacing:.06em;font-variant-numeric:tabular-nums;box-shadow:0 8px 24px rgba(0,0,0,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}',
         '.card{position:relative;z-index:1;display:flex;flex-direction:row;align-items:center;gap:0;width:640px;padding:36px;border-radius:24px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);box-shadow:0 32px 80px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);animation:card-in .5s ease-out}',
-        '@keyframes card-in{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}'
+        '@keyframes card-in{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}',
+        // 浅色主题首屏覆盖：外链 CSS 加载完成前不要闪一下深色
+        "[data-theme='light'] body{background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);color:#1e293b}",
+        "[data-theme='light'] .card{background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.08);box-shadow:0 32px 80px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.6)}",
+        "[data-theme='light'] .topbar-btn,[data-theme='light'] .clock-chip{background:rgba(255,255,255,.78);border-color:rgba(0,0,0,.08);color:#1e293b}"
     ];
 
     const criticalCss = criticalCssRules.join('\n');
@@ -165,23 +169,58 @@ async function build() {
     // ── 处理 HTML ─────────────────────────────────────────────
     let htmlContent = fs.readFileSync(path.join(SRC, 'index.html'), 'utf-8');
 
-    // 移除原有 preload link
-    htmlContent = htmlContent.replace(/\s*<link rel="preload" href="\/style\.css" as="style">\n/, '\n');
-
-    // 替换 stylesheet link 为带哈希版本（CSP 限制内联脚本，不使用 media="print" 技巧）
+    // 将源码中的资源引用替换为带哈希版本
+    // 正则兼容 `>` 与 ` />` 两种标签写法，避免格式化后替换失效导致线上 404
     htmlContent = htmlContent.replace(
-        '<link rel="stylesheet" href="/style.css">',
-        `<style>${criticalCss}</style>\n    <link rel="stylesheet" href="/${cssFileName}">`
+        /<link\s+rel="preload"\s+href="\/style\.css"\s+as="style"\s*\/?>/,
+        `<link rel="preload" href="/${cssFileName}" as="style" />`
     );
-
-    // 替换 script src 为带哈希版本
     htmlContent = htmlContent.replace(
-        '<script src="/script.js" defer></script>',
+        /<link\s+rel="preload"\s+href="\/script\.js"\s+as="script"\s*\/?>/,
+        `<link rel="preload" href="/${jsFileName}" as="script" />`
+    );
+    htmlContent = htmlContent.replace(
+        /<link\s+rel="stylesheet"\s+href="\/style\.css"\s*\/?>/,
+        `<style>${criticalCss}</style>\n        <link rel="stylesheet" href="/${cssFileName}" />`
+    );
+    htmlContent = htmlContent.replace(
+        /<script\s+src="\/script\.js"\s+defer\s*><\/script>/,
         `<script src="/${jsFileName}" defer></script>`
     );
 
+    // 校验：确保没有残留的未哈希引用
+    const staleRefs = [];
+    if (htmlContent.includes('href="/style.css"')) {
+        staleRefs.push('/style.css');
+    }
+    if (htmlContent.includes('src="/script.js"')) {
+        staleRefs.push('/script.js');
+    }
+    if (htmlContent.includes('href="/script.js"')) {
+        staleRefs.push('/script.js (preload)');
+    }
+    if (staleRefs.length > 0) {
+        console.error(`✘  HTML 中仍存在未哈希的资源引用: ${staleRefs.join(', ')}`);
+        process.exit(1);
+    }
+
     fs.writeFileSync(path.join(DIST, 'index.html'), htmlContent);
     console.log(`✔  index.html  (内联关键 CSS + 引用哈希资源)`);
+
+    // ── Service Worker ───────────────────────────────────────
+    // 必须随构建产物一起部署，否则线上 /sw.js 404，离线能力完全失效
+    if (fs.existsSync(path.join(SRC, 'sw.js'))) {
+        const buildHash = hashContent(cssFileName + jsFileName);
+        let swSource = fs.readFileSync(path.join(SRC, 'sw.js'), 'utf-8');
+        swSource = swSource
+            .replace("'/style.css'", `'/${cssFileName}'`)
+            .replace("'/script.js'", `'/${jsFileName}'`)
+            .replace(/const CACHE_NAME = '[^']*'/, `const CACHE_NAME = 'vup-random-${buildHash}'`);
+        fs.writeFileSync(path.join(DIST, 'sw.js'), swSource);
+        console.log(`✔  sw.js  (已注入哈希资源名, cache: vup-random-${buildHash})`);
+    } else {
+        console.warn('⚠  src/sw.js 不存在，跳过 Service Worker 部署');
+    }
 
     // ── manifest.json ────────────────────────────────────────
     if (fs.existsSync(path.join(SRC, 'manifest.json'))) {
@@ -201,21 +240,29 @@ async function build() {
 
     // ── face_img/ 头像复制 ───────────────────────────────────
     if (fs.existsSync(FACE_IMG)) {
-        let count = 0;
-        for (const file of fs.readdirSync(FACE_IMG)) {
-            const srcFile = path.join(FACE_IMG, file);
-            if (fs.statSync(srcFile).isFile()) {
-                fs.copyFileSync(srcFile, path.join(DIST, 'face_img', file));
-                count++;
-            }
-        }
-        console.log(`✔  face_img/ (${count} files)`);
+        const allFiles = fs.readdirSync(FACE_IMG).filter((f) => fs.statSync(path.join(FACE_IMG, f)).isFile());
+        const webpSet = new Set(allFiles.filter((f) => f.endsWith('.webp')));
 
-        // 检查是否存在优化后的 WebP 图片
-        const optimizedDir = path.join(DIST, 'face_img');
-        const webpFiles = fs.readdirSync(optimizedDir).filter((f) => f.endsWith('.webp'));
-        if (webpFiles.length > 0) {
-            console.log(`✔  WebP 优化图片 (${webpFiles.length} files)`);
+        let count = 0;
+        let skippedJpg = 0;
+
+        for (const file of allFiles) {
+            // 已有 WebP 的头像不再重复打包 JPG：前端优先 WebP，
+            // WebP 缺失时回退链上还有 B 站 CDN，不必为每张图多带一份 JPG
+            if (file.endsWith('.jpg')) {
+                const uid = path.basename(file, '.jpg');
+                if (webpSet.has(`${uid}@140w.webp`) || webpSet.has(`${uid}.webp`)) {
+                    skippedJpg++;
+                    continue;
+                }
+            }
+            fs.copyFileSync(path.join(FACE_IMG, file), path.join(DIST, 'face_img', file));
+            count++;
+        }
+
+        console.log(`✔  face_img/ (${count} files${skippedJpg > 0 ? `, 跳过 ${skippedJpg} 个已有 WebP 的 JPG` : ''})`);
+        if (webpSet.size > 0) {
+            console.log(`✔  WebP 优化图片 (${webpSet.size} files)`);
         }
     } else {
         console.warn('⚠  face_img/ 不存在，头像将通过 B 站 CDN fallback 加载');

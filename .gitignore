@@ -9,6 +9,9 @@ dist/
 .env.local
 .env.*.local
 
+# EdgeOne 本地凭证（API Token，绝不能提交）
+.edgeone/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
@@ -24,6 +27,10 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+
+# WorkBuddy / 其他工具工作产物
+.kilo/
+.workbuddy/
 
 # Temporary files
 *.tmp

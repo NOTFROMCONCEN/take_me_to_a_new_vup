@@ -3,6 +3,10 @@
     "version": "1.0.0",
     "description": "随机将你带到一个 VUP 的 Bilibili 主页，Node-only + EdgeOne-ready",
     "main": "server.js",
+    "private": true,
+    "engines": {
+        "node": ">=18"
+    },
     "scripts": {
         "dev": "nodemon server.js",
         "preview": "node server.js --dist",
@@ -20,7 +24,11 @@
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "deploy": "npm run prefetch && npm run optimize-images && npm run build"
+        "deploy": "npm run prefetch && npm run optimize-images && npm run build",
+        "deploy:edgeone": "npm run optimize-images && npm run build && npx -y edgeone@latest makers deploy ./dist -n take-me-to-a-vup --json",
+        "deploy:edgeone:preview": "npm run optimize-images && npm run build && npx -y edgeone@latest makers deploy ./dist -n take-me-to-a-vup -e preview --json",
+        "deploy:edgeone:login": "npx -y edgeone@latest login --site china",
+        "deploy:edgeone:whoami": "npx -y edgeone@latest whoami"
     },
     "dependencies": {
         "express": "^4.19.2"
